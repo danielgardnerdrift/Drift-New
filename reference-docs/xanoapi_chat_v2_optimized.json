@@ -1,0 +1,289 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "chat_v2_optimized",
+    "description": "Optimized chat system - rebuilt from 82-step monolithic functions to clean, maintainable XanoScript with proper error handling and performance",
+    "version": "0.0.1"
+  },
+  "servers": [
+    {
+      "url": "https://api.autosnap.cloud/api:MKPwDskM"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+
+    }
+  },
+  "paths": {
+    "/chat/message_complete": {
+      "post": {
+        "summary": "Complete optimized chatbot with ALL 82-step functionality",
+        "description": "Complete optimized chatbot with ALL 82-step functionality\n\u003Cbr /\u003E\u003Cbr /\u003E\n\u003Cb\u003EAuthentication:\u003C/b\u003E not required",
+        "tags": [
+          "chat"
+        ],
+        "security": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success!",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Input Error. Check the request payload for issues."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Access denied. Additional privileges are needed access the requested resource."
+          },
+          "404": {
+            "description": "Not Found. The requested resource does not exist."
+          },
+          "429": {
+            "description": "Rate Limited. Too many requests."
+          },
+          "500": {
+            "description": "Unexpected error"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_query": {
+                    "type": "string",
+                    "description": "The current message from the user"
+                  },
+                  "visitor_ip_address": {
+                    "type": "string",
+                    "description": "User IP address"
+                  },
+                  "conversation_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Existing conversation ID",
+                    "nullable": true
+                  },
+                  "user_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Authenticated user ID",
+                    "nullable": true
+                  },
+                  "chat_user_session_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Chat session ID",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "user_query"
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_query": {
+                    "type": "string",
+                    "description": "The current message from the user"
+                  },
+                  "visitor_ip_address": {
+                    "type": "string",
+                    "description": "User IP address"
+                  },
+                  "conversation_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Existing conversation ID",
+                    "nullable": true
+                  },
+                  "user_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Authenticated user ID",
+                    "nullable": true
+                  },
+                  "chat_user_session_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Chat session ID",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "user_query"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/create": {
+      "post": {
+        "summary": "Create or retrieve chat session - supports both new sessions and session recovery",
+        "description": "Create or retrieve chat session - supports both new sessions and session recovery\n\u003Cbr /\u003E\u003Cbr /\u003E\n\u003Cb\u003EAuthentication:\u003C/b\u003E not required",
+        "tags": [
+          "session"
+        ],
+        "security": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success!",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Input Error. Check the request payload for issues."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Access denied. Additional privileges are needed access the requested resource."
+          },
+          "404": {
+            "description": "Not Found. The requested resource does not exist."
+          },
+          "429": {
+            "description": "Rate Limited. Too many requests."
+          },
+          "500": {
+            "description": "Unexpected error"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "visitor_ip_address": {
+                    "type": "string",
+                    "description": "User's IP address for session tracking"
+                  },
+                  "browser_fingerprint": {
+                    "type": "string",
+                    "description": "Browser fingerprint for enhanced session tracking",
+                    "nullable": true
+                  },
+                  "existing_session_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Existing session ID for recovery (page refresh scenarios)",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "visitor_ip_address"
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "visitor_ip_address": {
+                    "type": "string",
+                    "description": "User's IP address for session tracking"
+                  },
+                  "browser_fingerprint": {
+                    "type": "string",
+                    "description": "Browser fingerprint for enhanced session tracking",
+                    "nullable": true
+                  },
+                  "existing_session_id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Existing session ID for recovery (page refresh scenarios)",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "visitor_ip_address"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhook/n8n_data_collection": {
+      "post": {
+        "summary": "Optimized N8N webhook for data collection - simplified from 47 steps",
+        "description": "Optimized N8N webhook for data collection - simplified from 47 steps\n\u003Cbr /\u003E\u003Cbr /\u003E\n\u003Cb\u003EAuthentication:\u003C/b\u003E not required",
+        "tags": [
+          "webhook"
+        ],
+        "security": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success!",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Input Error. Check the request payload for issues."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Access denied. Additional privileges are needed access the requested resource."
+          },
+          "404": {
+            "description": "Not Found. The requested resource does not exist."
+          },
+          "429": {
+            "description": "Rate Limited. Too many requests."
+          },
+          "500": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    }
+  }
+}

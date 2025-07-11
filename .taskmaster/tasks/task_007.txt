@@ -1,0 +1,36 @@
+# Task ID: 7
+# Title: Implement LangGraph Data Collection Node
+# Status: pending
+# Dependencies: 2, 6
+# Priority: high
+# Description: Create the Data Collection node in LangGraph to extract and validate data based on workflow requirements.
+# Details:
+1. Create `src/workflows/data_collection.py` with DataCollectionNode class
+2. Implement using Gemini 2.5 Flash for better reasoning as specified in PRD
+3. Define the node interface:
+   ```python
+   class DataCollectionNode:
+       def __init__(self, llm_client):
+           self.llm = llm_client
+           self.model = "gemini-2.5-flash"
+       
+       async def collect_data(self, state: ConversationState) -> CollectedData:
+           # Implementation
+   ```
+4. Create data extraction logic for each workflow:
+   - General Chat (workflow_id = 1): No data collection
+   - Shopper Showroom (workflow_id = 2): Extract required and optional fields
+   - Personal Showroom (workflow_id = 3): Extract required and optional fields
+5. Implement validation for collected data
+6. Add tracking for collected fields and next_field determination
+7. Create structured output with Pydantic models
+8. Implement progressive data collection strategy
+9. Add error handling for invalid or missing data
+
+# Test Strategy:
+1. Write unit tests for data extraction with sample messages
+2. Test validation logic for each field type
+3. Verify correct next_field determination
+4. Test with various input formats and edge cases
+5. Benchmark performance and response times
+6. Validate extraction accuracy for different data types

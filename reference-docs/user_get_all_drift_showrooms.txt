@@ -1,0 +1,36 @@
+### /user/get_all_drifts
+
+#3191 [[open]](https://api.autosnap.cloud/workspace/7-0/api/320/query/3191)
+
+URL: [https:/api.autosnap.cloud/mtJ4TPtz/user/get_all_drifts](https:/api.autosnap.cloud/mtJ4TPtz/user/get_all_drifts)
+
+#### Curl Command:
+```
+curl -X GET https://api.autosnap.cloud/api:mtJ4TPtz/user/get_all_drifts?user_id= \
+    -H "Authorization: Bearer XANOTOKEN"
+```
+
+Get all drifts that were created by a user given user_id
+
+#### Inputs: 1
+
+##### `user_id` (int) single (required)
+- not nullable
+
+#### Steps: 4
+
+##### 1 Has Record **user** as `var:user_exists`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:user_id`
+##### 2 Conditional - if:
+  -  `var:user_exists` = `const:bool:true`
+**then**
+##### 2.1 Query all Records from **drift** as `var:user_drift_records`
+  - Custom Filters:
+    -  `col:drift.user_id` = `input:user_id`
+  - as raw list
+##### 2.2 Throw Error
+  - value: `user not found`
+#### Outputs: 1
+- self: `var:user_drift_records`

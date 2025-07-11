@@ -1,0 +1,311 @@
+### /chat/message_complete
+
+#3463 [[open]](https://api.autosnap.cloud/workspace/7-0/api/337/query/3463)
+
+URL: [https:/api.autosnap.cloud/MKPwDskM/chat/message_complete](https:/api.autosnap.cloud/MKPwDskM/chat/message_complete)
+
+#### Curl Command:
+```
+curl -X POST https://api.autosnap.cloud/api:MKPwDskM/chat/message_complete \
+  -H "Content-Type: application/json" \
+  -d '{ 
+    "user_query": "", 
+    "visitor_ip_address": "", 
+    "conversation_id": "", 
+    "user_id": "", 
+    "chat_user_session_id": "" 
+  }'
+```
+
+Complete optimized chatbot with ALL 82-step functionality
+
+#### Inputs: 5
+
+##### `user_query` (text) single (required)
+- The current message from the user
+- not nullable
+- trim
+##### `visitor_ip_address` (text) single (optional)
+- User IP address
+- not nullable
+- trim
+##### `conversation_id` (int) single (optional)
+- Existing conversation ID
+- nullable
+- not nullable
+##### `user_id` (int) single (optional)
+- Authenticated user ID
+- nullable
+- not nullable
+##### `chat_user_session_id` (int) single (optional)
+- Chat session ID
+- nullable
+- not nullable
+
+#### Steps: 48
+
+##### 1 Conditional - if:
+  -  `input:user_id` != `const:int:0`
+  - AND `input:user_id` != `const:null:null`
+**then**
+##### 1.1 Has Record [deleted table] as `var:user_exists`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:user_id`
+##### 1.2 Conditional - if:
+  -  `var:user_exists` = `const:bool:true`
+**then**
+##### 1.2.1 Get Record [deleted table] as `var:user`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:user_id`
+##### 1.2.2 Edit Record in [deleted table] as `var:user_updated`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:user_id`
+  - tokens_remaining_internal: `var:user.tokens_remaining_internal`
+    - filters:
+    - **Filters: 1**
+    - subtract
+      - value: 0.03
+  - tokens_remaining_integer: `var:user.tokens_remaining_internal`
+    - filters:
+    - **Filters: 2**
+    - subtract
+      - value: 0.03
+    - floor
+##### 2 Has Record [deleted table] as `var:chat_session_exists`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:chat_user_session_id`
+##### 3 Conditional - if:
+  -  `var:chat_session_exists` = `const:bool:true`
+**then**
+##### 3.1 Get Record [deleted table] as `var:driftai_chat_user_session`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:chat_user_session_id`
+##### 3.2 Conditional - if:
+  -  `var:driftai_chat_user_session.name` != `const:null:null`
+  - AND `var:driftai_chat_user_session.phone` != `const:null:null`
+**then**
+##### 3.2.1 Create Variable as `var:pre_collected_data`
+  From: `const:obj:{}`
+
+  Output filtered by:
+  - set
+    - path: user_name
+    - value: `var:driftai_chat_user_session.name`
+  - set
+    - path: user_phone
+    - value: `var:driftai_chat_user_session.phone`
+##### 3.2.2 Create Variable as `var:has_pre_data`
+  From: `const:bool:true`
+##### 3.2.3 Create Variable as `var:pre_collected_data`
+  From: `const:obj:{}`
+##### 3.2.4 Create Variable as `var:has_pre_data`
+  From: `const:bool:false`
+##### 3.3 Throw Error
+  - value: `no session exists`
+##### 4 Conditional - if:
+  -  `input:conversation_id` = `const:null:null`
+**then**
+##### 4.1 Conditional - if:
+  -  `var:has_pre_data` = `const:bool:true`
+**then**
+##### 4.1.1 Create Variable as `var:enhanced_query`
+  From: `input:user_query`
+
+  Output filtered by:
+  - concat
+    - value: . Also my name is 
+    - sep: `default:`
+  - concat
+    - value: `var:pre_collected_data.user_name`
+    - sep: `default:`
+  - concat
+    - value:  and my phone number is 
+    - sep: `default:`
+  - concat
+    - value: `var:pre_collected_data.user_phone`
+    - sep: `default:`
+##### 4.1.2 Create Variable as `var:enhanced_query`
+  From: `input:user_query`
+**then**
+##### 4.2 Add Record in [deleted table] as `var:conversation`
+  Inputs: 
+  - created_at: `const:now`
+  - name: `const:conversation1`
+  - model: `const:gpt4o-mini`
+  - visitor_ip_address: `input:visitor_ip_address`
+  - user_id: `input:user_id`
+  - driftai_chat_user_sessions_id: `var:driftai_chat_user_session.id`
+  - message_count: `const:int:0`
+  - driftaichat_workflows_id: `const:int:1`
+  - status: `const:active`
+  - collected_data: `var:pre_collected_data`
+  - workflow_state: `const:{}`
+##### 4.3 Create Variable as `var:conversation_id`
+  From: `var:conversation.id`
+##### 4.4 Create Variable as `var:message_index`
+  From: `const:int:0`
+##### 4.5 Create Variable as `var:user_query_final`
+  From: `var:enhanced_query`
+##### 4.6 Create Variable as `var:conversation_id`
+  From: `input:conversation_id`
+##### 4.7 Has Record [deleted table] as `var:conversation_exists`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:conversation_id`
+##### 4.8 Conditional - if:
+  -  `var:conversation_exists` = `const:bool:true`
+**then**
+##### 4.8.3 Get Record [deleted table] as `var:conversation`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:conversation_id`
+##### 4.8.3 Create Variable as `var:message_index`
+  From: `var:conversation.message_count`
+##### 4.8.3 Throw Error
+  - value: `no conversation exists`
+##### 4.9 Create Variable as `var:user_query_final`
+  From: `input:user_query`
+##### 5 Add Record in [deleted table] as `var:user_message_added`
+  Inputs: 
+  - created_at: `const:now`
+  - role: `const:user`
+  - content: `var:user_query_final`
+  - index: `var:message_index`
+  - user_driftbot_conversations_id: `var:conversation_id`
+##### 6 Conditional - if:
+  -  `var:has_pre_data` = `const:bool:true`
+**then**
+##### 6.1 Edit Record in [deleted table] as `var:message_count_updated`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:conversation_id`
+  - user_id: `input:user_id`
+  - message_count: `var:conversation.message_count`
+    - filters:
+    - **Filters: 1**
+    - add
+      - value: 1
+  - creation_pending: `const:bool:false`
+  - collected_data: `var:pre_collected_data`
+  - workflow_state: `const:{}`
+##### 7 Get Record [deleted table] as `var:driftaichat_workflows_record`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:conversation.driftaichat_workflows_id`
+##### 8 Create Variable as `var:n8n_base`
+  From: `const:obj:{}`
+##### 9 Create Variable as `var:n8n_params`
+  From: `var:n8n_base`
+
+  Output filtered by:
+  - set
+    - path: workflow_id
+    - value: `var:conversation.driftaichat_workflows_id`
+##### 10 Create Variable as `var:n8n_params`
+  From: `var:n8n_params`
+
+  Output filtered by:
+  - set
+    - path: message
+    - value: `var:user_query_final`
+##### 11 Create Variable as `var:n8n_params`
+  From: `var:n8n_params`
+
+  Output filtered by:
+  - set
+    - path: conversation_id
+    - value: `var:conversation.id`
+##### 12 Create Variable as `var:n8n_params`
+  From: `var:n8n_params`
+
+  Output filtered by:
+  - set
+    - path: collected_fields
+    - value: `var:conversation.workflow_state.collected_fields`
+##### 13 Create Variable as `var:n8n_params`
+  From: `var:n8n_params`
+
+  Output filtered by:
+  - set
+    - path: next_field
+    - value: `var:conversation.workflow_state.next_field`
+##### 14 Create Variable as `var:n8n_params`
+  From: `var:n8n_params`
+
+  Output filtered by:
+  - set
+    - path: workflow_status
+    - value: `var:conversation.status`
+##### 15 External API Request as `var:n8n_response`
+  Inputs: 
+  - url: `const:https://driftbot.app.n8n.cloud/webhook/driftbot-webhook`
+  - method: `const:GET`
+  - params: `var:n8n_params`
+  - headers: `const:array:[]`
+    - filters:
+    - **Filters: 1**
+    - push
+      - value: Content-Type: application/json
+  - timeout: `const:int:20`
+  - follow_location: `const:bool:true`
+  - verify_host: `const:bool:true`
+  - verify_peer: `const:bool:true`
+##### 16 Conditional - if:
+  -  `var:n8n_response.response.result.workflow_status` = `const:showroom_in_progress`
+**then**
+##### 16.1 Edit Record in [deleted table] as `var:user_session_tokens_updated`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:driftai_chat_user_session.id`
+  - tokens_remaining_internal: `var:driftai_chat_user_session.tokens_remaining_internal`
+    - filters:
+    - **Filters: 1**
+    - subtract
+      - value: 11
+  - tokens_remaining_integer: `var:driftai_chat_user_session.tokens_remaining_internal`
+    - filters:
+    - **Filters: 2**
+    - subtract
+      - value: 11
+    - floor
+##### 16.2 Optimized showroom creation - modular design with parallel processing, proper error handling, and async optimization. Replaces 57-step monolithic function. as `var:showroom_creation`
+  Inputs: 
+  - conversation_id: `var:conversation_id`
+  - user_chat_session_id: `var:driftai_chat_user_session.id`
+  - user_id: `input:user_id`
+##### 16.3 Create Variable as `var:tokens_remaining`
+  From: `var:user_session_tokens_updated.tokens_remaining_integer`
+##### 16.4 Create Variable as `var:tokens_remaining`
+  From: `var:driftai_chat_user_session.tokens_remaining_integer`
+##### 17 Add Record in [deleted table] as `var:assistant_message_added`
+  Inputs: 
+  - created_at: `const:now`
+  - role: `var:n8n_response.response.result.role`
+  - content: `var:n8n_response.response.result.content`
+  - execution_id: `var:n8n_response.response.result.execution_id`
+  - index: `var:user_message_added.index`
+    - filters:
+    - **Filters: 1**
+    - add
+      - value: 1
+  - user_driftbot_conversations_id: `var:conversation_id`
+  - tool_response: `const:{}`
+  - token_usage: `const:obj:{}`
+  - @meta: `const:null:null`
+##### 18 Create Variable as `var:response_data`
+  From: `const:expr:{
+  message: $assistant_message_added.content
+  role: $assistant_message_added.role
+  index: $assistant_message_added.index
+  conversation_id: $conversation.id
+  status: $n8n_response.response.result.workflow_status
+  tokens_remaining: $tokens_remaining
+  session_id: $driftai_chat_user_session.id
+}`
+#### Outputs: 1
+- self: `var:response_data`

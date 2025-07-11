@@ -1,0 +1,37 @@
+### /inventory/{dealer_id}
+
+#3085 [[open]](https://api.autosnap.cloud/workspace/7-0/api/316/query/3085)
+
+URL: [https:/api.autosnap.cloud/sEcnJqpe/inventory/{dealer_id}](https:/api.autosnap.cloud/sEcnJqpe/inventory/{dealer_id})
+(**Note: Curly braces indicate dynamic path variables**)
+
+#### Curl Command:
+```
+curl -X GET https://api.autosnap.cloud/api:sEcnJqpe/inventory/{dealer_id}?dealership_id=&user_id=
+```
+
+get all inventory for a dealership
+
+#### Inputs: 2
+
+##### `dealership_id` (int) single (optional)
+- not nullable
+##### `user_id` (int) single (optional)
+- not nullable
+
+#### Steps: 3
+
+##### 1 Query all Records from **Stores the many-to-many relationship between users and dealerships** as `var:relationship_exists`
+  - Custom Filters:
+    -  `col:user_dealership.dealership_id` = `input:dealership_id`
+    - AND `col:user_dealership.user_id` = `input:user_id`
+  - as boolean (true if at least one record exists)
+##### 2 Conditional - if:
+  -  `var:relationship_exists` = `const:bool:true`
+**then**
+##### 2.1 Query all Records from **vehicle** as `var:vehicles`
+  - Custom Filters:
+    -  `col:vehicle.dealership_id` = `input:dealership_id`
+  - as raw list
+#### Outputs: 1
+- self: `var:vehicles`

@@ -1,0 +1,607 @@
+### /webhook/data_collection_n8n
+
+#3234 [[open]](https://api.autosnap.cloud/workspace/7-0/api/327/query/3234)
+
+URL: [https:/api.autosnap.cloud/owKhF9pX/webhook/data_collection_n8n](https:/api.autosnap.cloud/owKhF9pX/webhook/data_collection_n8n)
+
+#### Curl Command:
+```
+curl -X POST https://api.autosnap.cloud/api:owKhF9pX/webhook/data_collection_n8n
+```
+
+get data from n8n and save to xano
+
+#### Steps: 47
+
+##### 1 Get All Raw Input as `var:data`
+  Inputs: 
+  - encoding: `const:json`
+  - exclude_middleware_modification: `const:bool:false`
+##### *2 Stop & Debug (disabled)*
+##### 3 Get Record **for all conversations a user or visitor has with driftbot to take an action using MPC** as `var:existing_state`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:data.conversation_id`
+  - lock: `const:bool:false`
+##### 4 Get Record **Table that contains all the workflows necessary to power driftai chat tools for creation of drifts and other processes.** as `var:workflow_spec`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:data.workflow_id`
+  - lock: `const:bool:false`
+##### 5 Lambda as `var:updated_state`
+  Inputs: 
+  - code: `const:/**
+ * Xano Lambda to compute updated conversation record for user_driftbot_conversations table
+ * Inputs:
+ *   - $var.data: Incoming data from n8n
+ *   - $var.existing_state: Current conversation record
+ *   - $var.workflow_spec: Workflow specification with required and optional fields
+ * Output: JSON object for direct insertion into user_driftbot_conversations table
+ */
+
+// Parse inputs
+const data = $var.data || {};
+const existing_state = $var.existing_state || {};
+const workflow_spec = $var.workflow_spec || {};
+
+// Validate inputs
+if (!data.conversation_id || data.conversation_id != existing_state.id) {
+  throw new Error("Invalid or mismatched conversation_id");
+}
+if (!data.workflow_id || data.workflow_id != workflow_spec.id) {
+  throw new Error("Invalid or mismatched workflow_id");
+}
+
+// Extract data fields
+const conversation_id = data.conversation_id;
+const workflow_id = data.workflow_id;
+const collected_data = data.collected_data || {};
+const newly_collected_data = Array.isArray(data.newly_collected_data) ? data.newly_collected_data : [];
+const required_fields = workflow_spec.required_fields || [];
+const optional_fields = workflow_spec.optional_fields || [];
+const valid_fields = [...required_fields, ...optional_fields];
+
+// Initialize output record from existing_state
+const updated_record = { ...existing_state };
+
+// Update driftaichat_workflows_id
+updated_record.driftaichat_workflows_id = workflow_id;
+
+// Update collected_data
+updated_record.collected_data = {
+  ...existing_state.collected_data
+};
+
+// Add valid fields from collected_data
+Object.keys(collected_data).forEach(key => {
+  if (valid_fields.includes(key)) {
+    updated_record.collected_data[key] = collected_data[key];
+  }
+});
+
+// Update workflow_state
+// Handle invalid existing collected_fields
+const existing_collected_fields = Array.isArray(existing_state.workflow_state?.collected_fields) &&
+  existing_state.workflow_state.collected_fields.every(f => typeof f === 'string')
+  ? existing_state.workflow_state.collected_fields
+  : [];
+
+// Collect new fields
+const new_fields = [
+  ...Object.keys(collected_data).filter(key => valid_fields.includes(key)),
+  ...newly_collected_data.filter(field => valid_fields.includes(field))
+].filter(field => !existing_collected_fields.includes(field));
+
+const updated_collected_fields = [...new Set([...existing_collected_fields, ...new_fields])];
+
+// Determine next_field
+let next_field = null;
+for (const field of [...required_fields, ...optional_fields]) {
+  if (!updated_collected_fields.includes(field)) {
+    next_field = field;
+    break;
+  }
+}
+
+updated_record.workflow_state = {
+  workflow_id: workflow_id,
+  collected_fields: updated_collected_fields,
+  next_field: next_field
+};
+
+// Set workflow_status
+const all_required_collected = required_fields.every(field => updated_collected_fields.includes(field));
+updated_record.workflow_status = data.workflow_status && data.workflow_status === "active" && all_required_collected
+  ? "optional_collection"
+  : data.workflow_status || "active";
+
+// Increment message_count
+updated_record.message_count = (existing_state.message_count || 0) + 1;
+
+// Update user_name if provided
+if (collected_data.user_name) {
+  updated_record.user_name = collected_data.user_name;
+}
+
+// Ensure conversation_id is preserved (use id field from existing_state)
+updated_record.id = existing_state.id;
+
+// Return the updated record
+return updated_record;`
+  - timeout: `const:int:10`
+##### *6 Stop & Debug (disabled)*
+##### 7 Edit Record in **for all conversations a user or visitor has with driftbot to take an action using MPC** as `var:updated_conversation`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:existing_state.id`
+  - message_count: `var:updated_state.message_count`
+  - driftaichat_workflows_id: `var:updated_state.driftaichat_workflows_id`
+  - status: `var:updated_state.workflow_status`
+  - creation_pending: `const:bool:true`
+  - collected_data: `var:updated_state.collected_data`
+  - workflow_state: `var:updated_state.workflow_state`
+##### 8 Schedule Post Process
+##### 8.1 Group
+##### 8.1.1 Get Record **Track all visitors and users of driftbot chat including relevant IP address information, and contact information. Chat users will be converted to regular drift users upon signup.** as `var:existing_user_session`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:existing_state.driftai_chat_user_sessions_id`
+  - lock: `const:bool:false`
+##### 8.1.2 Lambda as `var:user_data`
+  Inputs: 
+  - code: `const:// Normalize user fields from updated_state
+const updatedState = $var.updated_state;
+
+// Initialize result object with all fields set to null
+const result = {
+    user_name: null,
+    user_email: null,
+    user_phone: null
+};
+
+// Check if updated_state and collected_data exist
+if (!updatedState || !updatedState.collected_data) {
+    return result;
+}
+
+const collectedData = updatedState.collected_data;
+
+// Check and set user_name
+if (collectedData.user_name !== undefined && 
+    collectedData.user_name !== null && 
+    collectedData.user_name !== '' && 
+    collectedData.user_name.toString().trim() !== '') {
+    result.user_name = collectedData.user_name;
+}
+
+// Check and set user_email
+if (collectedData.user_email !== undefined && 
+    collectedData.user_email !== null && 
+    collectedData.user_email !== '' && 
+    collectedData.user_email.toString().trim() !== '') {
+    result.user_email = collectedData.user_email;
+}
+
+// Check and set user_phone
+if (collectedData.user_phone !== undefined && 
+    collectedData.user_phone !== null && 
+    collectedData.user_phone !== '' && 
+    collectedData.user_phone.toString().trim() !== '') {
+    result.user_phone = collectedData.user_phone;
+}
+
+return result;`
+  - timeout: `const:int:10`
+##### 8.1.3 Lambda as `var:output_data`
+  Inputs: 
+  - code: `const:const existingUserSession = $var.existing_user_session;
+const userData = $var.user_data;
+
+const result = {};
+
+// Handle name
+if (userData['user_name'] !== null && userData['user_name'] !== undefined) {
+  result['name'] = userData['user_name'];
+} else {
+  result['name'] = existingUserSession['name'];
+}
+
+// Handle phone
+if (userData['user_phone'] !== null && userData['user_phone'] !== undefined) {
+  result['phone'] = userData['user_phone'];
+} else {
+  result['phone'] = existingUserSession['phone'];
+}
+
+return result;`
+  - timeout: `const:int:10`
+##### 8.1.4 Edit Record in **Track all visitors and users of driftbot chat including relevant IP address information, and contact information. Chat users will be converted to regular drift users upon signup.** as `var:updated_user_session`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:existing_state.driftai_chat_user_sessions_id`
+  - name: `var:output_data.name`
+  - user_email: `var:user_data.user_email`
+  - phone: `var:output_data.phone`
+##### *8.1.5 Query all Records (disabled)*
+##### 8.2 Group
+##### 8.2.1 Conditional - if:
+  -  `var:output_data.phone` != `const:null:null`
+**then**
+##### 8.2.1.1 If a user is using a different IP address and indicates the same phone number as an existing user session, decrement their tokens to equal their existing session. as `var:session_check`
+  Inputs: 
+  - phone: `var:output_data.phone`
+  - session_id: `var:updated_user_session.id`
+##### *8.3 Create Variable (disabled)*
+##### 8.4 Group
+##### 8.4.1 Conditional - if:
+  -  `var:updated_state.collected_data.dealershipwebsite_url` != `const:null:null`
+**then**
+##### 8.4.1.1 Group
+##### 8.4.1.1.1 Validate dealership website url. this is used in an api that is called by a data collection tool in the mcp server. as `var:clean_dealershipwebsite_url`
+  Inputs: 
+  - dealership_website_url: `var:updated_state.collected_data.dealershipwebsite_url`
+##### 8.4.1.1.2 Has Record **dealership** as `var:dealership_exists`
+  Inputs: 
+  - field_name: `const:website`
+  - field_value: `var:clean_dealershipwebsite_url`
+##### 8.4.1.1.3 Conditional - if:
+  -  `var:dealership_exists` = `const:bool:true`
+**then**
+##### 8.4.1.1.3.1 Get Record **dealership** as `var:dealership`
+  Inputs: 
+  - field_name: `const:website`
+  - field_value: `var:clean_dealershipwebsite_url`
+  - lock: `const:bool:false`
+##### *8.4.1.1.3.2 Stop & Debug (disabled)*
+##### 8.4.1.1.3.3 using the dealership website url, check to see if they exist in marketcheck and if so, get all the marketcheck data about the dealer to use in other requests. as `var:dealership`
+  Inputs: 
+  - website_url: `var:clean_dealershipwebsite_url`
+##### *8.4.1.1.3.4 Stop & Debug (disabled)*
+**then**
+##### *8.4.1.2 Query all Records (disabled)*
+##### *8.4.1.3 Query all Records (disabled)*
+##### 8.4.1.4 Conditional - if:
+  -  `var:updated_state.collected_data` = `const:bool:true`
+    - filters on left operand:
+      - **Filters: 3**
+      - keys
+      - join
+        - separator: ,
+      - contains
+        - search: vehiclesearchpreference
+**then**
+##### *8.4.1.4.1 Stop & Debug (disabled)*
+##### 8.4.1.4.2 Conditional - if:
+  -  `var:updated_conversation.preference_search_loading` = `const:bool:false`
+  - AND `var:updated_conversation.preference_search_complete` = `const:bool:false`
+  - AND `var:updated_state.collected_data.vehiclesearchpreference` = `const:`
+    - filters on left operand:
+      - **Filters: 1**
+      - count
+**then**
+##### *8.4.1.4.2.1 Stop & Debug (disabled)*
+##### 8.4.1.4.2.2 Edit Record in **for all conversations a user or visitor has with driftbot to take an action using MPC** as `var:user_driftbot_conversations1`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:updated_conversation.id`
+  - preference_search_loading: `const:bool:true`
+##### 8.4.1.4.2.3 Create Variable as `var:vehicleSearchPreference`
+  From: `var:updated_state.collected_data.vehiclesearchpreference`
+##### 8.4.1.4.2.4 marketchecksearch - dealer inventory api request process as `var:vehicle_search`
+  Inputs: 
+  - code: `const:// Vehicle Search Preference Normalizer for MarketCheck API
+// Simple inline processing for Xano compatibility
+
+// Declare input from Xano Lambda stack
+const vehicleSearchPreference = $var.vehicleSearchPreference as any[];
+
+if (!vehicleSearchPreference || !Array.isArray(vehicleSearchPreference) || vehicleSearchPreference.length === 0) {
+  return { error: "Invalid or empty vehicle search preferences" };
+}
+
+// Color mapping for normalization
+const colorMap: Record<string, string> = {
+  'white': 'white',
+  'black': 'black',
+  'silver': 'silver',
+  'gray': 'gray',
+  'grey': 'gray',
+  'red': 'red',
+  'blue': 'blue',
+  'green': 'green',
+  'brown': 'brown',
+  'tan': 'brown',
+  'sand tan': 'brown',
+  'forest green': 'green',
+  'yellow': 'yellow',
+  'orange': 'orange',
+  'purple': 'purple',
+  'gold': 'yellow'
+};
+
+// Helper to create range strings
+const createRange = (min: number, max: number, defaultMin: number, defaultMax: number): string => {
+  const minVal = min || defaultMin;
+  const maxVal = max || defaultMax;
+  return `${minVal}-${maxVal}`;
+};
+
+// Helper to normalize colors
+const normalizeColors = (colors: string[]): string[] | null => {
+  if (!colors || !Array.isArray(colors)) return null;
+  
+  return colors.map(color => {
+    const normalizedColor = color.toLowerCase().trim();
+    return colorMap[normalizedColor] || normalizedColor;
+  }).filter((color, index, self) => self.indexOf(color) === index); // Remove duplicates
+};
+
+// Process each preference
+const processedRequests = [];
+const preferences = vehicleSearchPreference;
+
+for (let i = 0; i < preferences.length; i++) {
+  const pref = preferences[i] as any;
+  const params: Record<string, any> = {};
+  
+  // Car type (default to used if not specified)
+  if (pref.condition) {
+    if (Array.isArray(pref.condition)) {
+      const conditionPriority = ['New', 'Certified', 'Used'];
+      const sortedConditions = pref.condition.sort((a: string, b: string) => 
+        conditionPriority.indexOf(a) - conditionPriority.indexOf(b)
+      );
+      params.car_type = sortedConditions[0].toLowerCase();
+    } else {
+      params.car_type = pref.condition.toLowerCase();
+    }
+  } else {
+    params.car_type = 'used';
+  }
+
+  if (pref.make && typeof pref.make === 'string' && pref.make.trim() !== '') {
+    params.make = pref.make.trim();
+  }
+
+  if (pref.model) {
+    if (Array.isArray(pref.model)) {
+      const validModels = pref.model.filter((m: string) => m && typeof m === 'string' && m.trim() !== '');
+      if (validModels.length > 0) {
+        params.model = validModels.join(',');
+      }
+    } else if (typeof pref.model === 'string' && pref.model.trim() !== '') {
+      params.model = pref.model.trim();
+    }
+  }
+
+  if (pref.body_style && typeof pref.body_style === 'string' && pref.body_style.trim() !== '') {
+    params.body_style = pref.body_style.trim();
+  }
+
+  if (pref.year_min || pref.year_max) {
+    const yearRange = createRange(pref.year_min, pref.year_max, 1900, 2100);
+    params.year_range = yearRange;
+  }
+
+  if (pref.price_min || pref.price_max) {
+    const priceRange = createRange(pref.price_min, pref.price_max, 1000, 100000);
+    params.price_range = priceRange;
+  }
+
+  if (pref.miles_min || pref.miles_max) {
+    const milesRange = createRange(pref.miles_min, pref.miles_max, 0, 100000);
+    params.miles_range = milesRange;
+  }
+
+  if (pref.exterior_color && Array.isArray(pref.exterior_color)) {
+    const normalizedColors = normalizeColors(pref.exterior_color);
+    if (normalizedColors && normalizedColors.length > 0) {
+      params.base_exterior_color = normalizedColors.join(',');
+    }
+  }
+
+  params.start = '0';
+  params.rows = '50';
+  params.include_relevant_links = 'true';
+
+  const queryParts = [];
+  for (const key in params) {
+    if (params[key] !== undefined && params[key] !== null) {
+      queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`);
+    }
+  }
+  
+  processedRequests.push({
+    params: params,
+    query_string: queryParts.join('&'),
+    param_count: Object.keys(params).length,
+    preference_index: i
+  });
+}
+
+// Check if we can combine requests using YMMT format
+let canCombine = false;
+if (preferences.length > 1) {
+  const rangeFields = ['price_min', 'price_max', 'year_min', 'year_max', 'miles_min', 'miles_max'];
+  let firstRanges: Record<string, any> = {};
+  
+  for (const field of rangeFields) {
+    if ((preferences[0] as any)[field] !== undefined) {
+      firstRanges[field] = (preferences[0] as any)[field];
+    }
+  }
+  
+  canCombine = true;
+  for (let i = 1; i < preferences.length; i++) {
+    for (const field of rangeFields) {
+      if ((preferences[i] as any)[field] !== firstRanges[field]) {
+        canCombine = false;
+        break;
+      }
+    }
+    if (!canCombine) break;
+  }
+}
+
+if (canCombine && preferences.length > 1) {
+  const ymmtParts = [];
+  const allColors: string[] = [];
+  
+  for (const prefRaw of preferences) {
+    const pref = prefRaw as any;
+    const year = (pref.year_min && pref.year_max && pref.year_min === pref.year_max) ?
+                 pref.year_min : (pref.year_min || pref.year_max || '');
+    const make = pref.make || '';
+    
+    if (pref.model && Array.isArray(pref.model)) {
+      for (const model of pref.model) {
+        ymmtParts.push(`${year}|${make}|${model}`);
+      }
+    } else {
+      const model = pref.model || '';
+      ymmtParts.push(`${year}|${make}|${model}`);
+    }
+
+    if (pref.exterior_color && Array.isArray(pref.exterior_color)) {
+      const normalizedColors = normalizeColors(pref.exterior_color);
+      if (normalizedColors) {
+        allColors.push(...normalizedColors);
+      }
+    }
+  }
+
+  const combinedParams: Record<string, any> = {};
+  const firstPref = preferences[0] as any;
+
+  combinedParams.ymmt = ymmtParts.join(',');
+
+  if (firstPref.condition) {
+    const condition = Array.isArray(firstPref.condition) ? firstPref.condition[0] : firstPref.condition;
+    combinedParams.car_type = condition.toLowerCase();
+  } else {
+    combinedParams.car_type = 'used';
+  }
+
+  if (firstPref.year_min || firstPref.year_max) {
+    combinedParams.year_range = createRange(firstPref.year_min, firstPref.year_max, 1900, 2100);
+  }
+
+  if (firstPref.price_min || firstPref.price_max) {
+    combinedParams.price_range = createRange(firstPref.price_min, firstPref.price_max, 1000, 100000);
+  }
+
+  if (firstPref.miles_min || firstPref.miles_max) {
+    combinedParams.miles_range = createRange(firstPref.miles_min, firstPref.miles_max, 0, 100000);
+  }
+
+  if (allColors.length > 0) {
+    const uniqueColors = [...new Set(allColors)];
+    combinedParams.base_exterior_color = uniqueColors.join(',');
+  }
+
+  combinedParams.start = '0';
+  combinedParams.rows = '50';
+  combinedParams.include_relevant_links = 'false';
+
+  const combinedQueryParts = [];
+  for (const key in combinedParams) {
+    if (combinedParams[key] !== undefined && combinedParams[key] !== null) {
+      combinedQueryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(combinedParams[key])}`);
+    }
+  }
+
+  return {
+    success: true,
+    strategy: 'ymmt_combined',
+    requests: [{
+      params: combinedParams,
+      query_string: combinedQueryParts.join('&'),
+      param_count: Object.keys(combinedParams).length
+    }],
+    summary: {
+      total_preferences: preferences.length,
+      total_requests: 1,
+      method: 'ymmt_combined'
+    }
+  };
+}
+
+return {
+  success: true,
+  strategy: preferences.length === 1 ? 'single_request' : 'multiple_requests',
+  requests: processedRequests,
+  summary: {
+    total_preferences: preferences.length,
+    total_requests: processedRequests.length,
+    method: preferences.length === 1 ? 'individual_filters' : 'individual_requests'
+  }
+};
+`
+  - timeout: `const:int:10`
+##### *8.4.1.4.2.5 Stop & Debug (disabled)*
+##### 8.4.1.4.2.6 For Each loop `var:vehicle_search.requests` as `var:request`
+##### 8.4.1.4.2.6.1 External API Request as `var:api1`
+  Inputs: 
+  - url: `const:https://mc-api.marketcheck.com/v2/car/dealer/inventory/active`
+    - filters:
+    - **Filters: 3**
+    - concat
+      - value: `setting:marketcheck_api_key`
+      - sep: ?api_key=
+    - concat
+      - value: mc_dealer_id=
+        - **Filters: 1**
+        - concat
+          - value: `var:dealership.mc_dealer_id`
+          - sep: *<blank>*
+      - sep: &
+    - concat
+      - value: `var:request.query_string`
+      - sep: &
+  - method: `const:GET`
+  - params: `const:obj:{}`
+    - filters:
+    - **Filters: 3**
+    - set
+      - path: api_key
+      - value: `setting:marketcheck_api_key`
+    - set
+      - path: source
+      - value: `var:dealership.website`
+    - set
+      - path: car_type
+      - value: used
+  - headers: `const:array:[]`
+  - timeout: `const:int:10`
+  - follow_location: `const:bool:true`
+  - verify_host: `const:bool:true`
+  - verify_peer: `const:bool:true`
+  - ca_certificate: `const:`
+  - certificate: `const:`
+  - certificate_pass: `const:`
+  - private_key: `const:`
+  - private_key_pass: `const:`
+##### 8.4.1.4.2.6.2 using the url of the dealership website, import vehicles from marketcheck. as `var:imported`
+  Inputs: 
+  - url: `var:dealership.website`
+  - dealership_id: `var:dealership.id`
+  - listing_data: `var:api1.response.result.listings`
+##### 8.4.1.4.2.6.3 Break out of loop
+##### *8.4.1.4.2.6.4 Stop & Debug (disabled)*
+**then**
+##### *8.4.1.5 Stop & Debug (disabled)*
+##### 8.4.1.6 Conditional - if:
+  -  `var:dealership.initial_import_complete` = `const:bool:false`
+  - AND `var:dealership.importing` != `const:bool:true`
+**then**
+##### 8.4.1.6.1 Edit Record in **for all conversations a user or visitor has with driftbot to take an action using MPC** as `var:user_driftbot_conversations1`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:updated_conversation.id`
+  - dealer_inventory_loading: `const:bool:true`
+##### 8.4.1.6.2 using the url of the dealership website, import vehicles from marketcheck. as `var:import_inventory`
+  Inputs: 
+  - url: `var:dealership.website`
+  - dealership_id: `var:dealership.id`
+#### Outputs: 1
+- self: `var:updated_state`

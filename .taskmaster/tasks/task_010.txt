@@ -1,0 +1,27 @@
+# Task ID: 10
+# Title: Implement Theysis Dynamic Form Generation
+# Status: pending
+# Dependencies: 1, 4, 5
+# Priority: medium
+# Description: Integrate Theysis for dynamic form generation based on the data collection requirements of each workflow.
+# Details:
+1. Create `theysis.config.ts` with form definitions as specified in PRD
+2. Implement `components/TheysisChat.tsx` for rendering dynamic forms
+3. Create form schemas for each workflow:
+   - Shopper Showroom (workflow_id = 2)
+   - Personal Showroom (workflow_id = 3)
+4. Implement form validation rules
+5. Add styling consistent with Drift brand
+6. Create form submission handlers
+7. Implement dynamic field rendering based on next_field
+8. Add support for different input types (text, select, number, etc.)
+9. Implement field dependencies (e.g., model options based on selected make)
+10. Create error handling for form validation
+
+# Test Strategy:
+1. Test form rendering with various field types
+2. Verify validation rules work correctly
+3. Test form submission and data collection
+4. Validate accessibility of generated forms
+5. Test responsive behavior on different devices
+6. Verify dynamic field updates based on dependencies

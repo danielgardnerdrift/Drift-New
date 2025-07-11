@@ -1,0 +1,32 @@
+# Task ID: 1
+# Title: Setup Next.js Frontend Project with Theysis
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Initialize the Next.js project with TypeScript and integrate Theysis for dynamic UI generation, replacing the current WeWeb interface.
+# Details:
+1. Create a new Next.js 14 project with TypeScript using `npx create-next-app@latest drift-frontend --typescript`
+2. Install required dependencies: `npm install zustand @tanstack/react-query tailwindcss theysis@latest`
+3. Set up project structure according to PRD specifications:
+   - app/ (for Next.js App Router)
+   - components/ (for React components)
+   - lib/ (for utility functions and API clients)
+   - public/ (for static assets)
+4. Configure Tailwind CSS for styling
+5. Create .env.local file with required environment variables:
+   ```
+   NEXT_PUBLIC_XANO_API_URL=https://api.autosnap.cloud
+   NEXT_PUBLIC_DRIFT_PRIMARY_COLOR=#fe3500
+   XANO_API_KEY=your_api_key
+   ```
+6. Initialize Theysis configuration in `theysis.config.ts` with the specified theme and component whitelist
+7. Set up basic layout.tsx with Theysis provider
+8. Configure TypeScript with strict mode enabled
+9. Set up ESLint and Prettier for code quality
+
+# Test Strategy:
+1. Verify Next.js project builds successfully with `npm run build`
+2. Ensure Theysis components render correctly
+3. Validate environment variables are properly loaded
+4. Test responsive layout on multiple screen sizes
+5. Run ESLint to ensure code quality standards

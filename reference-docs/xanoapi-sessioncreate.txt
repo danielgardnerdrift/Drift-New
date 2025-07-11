@@ -1,0 +1,47 @@
+### /drift_new_session_create
+
+#3246 [[open]](https://api.autosnap.cloud/workspace/7-0/api/334/query/3246)
+
+URL: [https:/api.autosnap.cloud/DZI9DmIv/drift_new_session_create](https:/api.autosnap.cloud/DZI9DmIv/drift_new_session_create)
+
+#### Curl Command:
+```
+curl -X POST https://api.autosnap.cloud/api:DZI9DmIv/drift_new_session_create \
+  -H "Content-Type: application/json" \
+  -d '{ 
+    "visitor_ip_address": "", 
+    "browser_fingerprint": "" 
+  }'
+```
+
+Create or find chat session - simplified version
+
+#### Inputs: 2
+
+##### `visitor_ip_address` (text) single (required)
+- not nullable
+##### `browser_fingerprint` (text) single (optional)
+- not nullable
+
+#### Steps: 5
+
+##### 1 Precondition continue if:
+  -  `input:visitor_ip_address` != `const:`
+##### 2 Get Record **Track all visitors and users of driftbot chat including relevant IP address information, and contact information. Chat users will be converted to regular drift users upon signup.** as `var:existing_session`
+  Inputs: 
+  - field_name: `const:ip_address`
+  - field_value: `input:visitor_ip_address`
+##### 3 Conditional - if:
+  -  `var:existing_session` = `const:null:null`
+**then**
+##### 3.1 Add Record in **Track all visitors and users of driftbot chat including relevant IP address information, and contact information. Chat users will be converted to regular drift users upon signup.** as `var:session`
+  Inputs: 
+  - ip_address: `input:visitor_ip_address`
+  - session_id: `input:visitor_ip_address`
+  - browser_fingerprint: `input:browser_fingerprint`
+  - tokens_remaining_internal: `const:decimal:100`
+  - tokens_remaining_integer: `const:decimal:100`
+##### 4 Create Variable as `var:final_session`
+  From: `const:expr:$existing_session == null ? $session : $existing_session`
+#### Outputs: 1
+- self: `var:final_session`

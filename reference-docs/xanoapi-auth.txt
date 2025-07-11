@@ -1,0 +1,171 @@
+### /auth/signup
+
+#3047 [[open]](https://api.autosnap.cloud/workspace/7-0/api/314/query/3047)
+
+URL: [https:/api.autosnap.cloud/JGlUJzp_/auth/signup](https:/api.autosnap.cloud/JGlUJzp_/auth/signup)
+
+#### Curl Command:
+```
+curl -X POST https://api.autosnap.cloud/api:JGlUJzp_/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{ 
+    "last_name": "", 
+    "email": "", 
+    "password": "", 
+    "first_name": "", 
+    "name": "", 
+    "phone": "", 
+    "dealership_website": "", 
+    "referral": "" 
+  }'
+```
+
+Signup and retrieve an authentication token
+
+#### Inputs: 8
+
+##### `last_name` (text) single (optional)
+- not nullable
+##### `email` (email) single (optional)
+- not nullable
+##### `password` (text) single (optional)
+- not nullable
+##### `first_name` (text) single (optional)
+- not nullable
+- trim
+##### `name` (text) single (optional)
+- not nullable
+- trim
+##### `phone` (text) single (optional)
+- not nullable
+- trim
+##### `dealership_website` (text) single (optional)
+- not nullable
+- trim
+##### `referral` (text) single (optional)
+- a referral code
+- not nullable
+- trim
+
+#### Steps: 6
+
+##### 1 Create Variable as `var:phone_clean`
+  From: `input:phone`
+
+  Output filtered by:
+  - replace
+    - search:  
+    - replacement: *<blank>*
+  - replace
+    - search: (
+    - replacement: *<blank>*
+  - replace
+    - search: )
+    - replacement: *<blank>*
+  - replace
+    - search: -
+    - replacement: *<blank>*
+  - to_int
+##### *2 Stop & Debug (disabled)*
+##### 3 Get Record **user** as `var:user`
+  Inputs: 
+  - field_name: `const:email`
+  - field_value: `input:email`
+  - lock: `const:bool:false`
+##### 4 Precondition continue if:
+  -  `var:user` = `const:null:null`
+##### 5 Add Record in **user** as `var:user`
+  Inputs: 
+  - created_at: `const:now`
+  - name: `input:name`
+  - first_name: `input:first_name`
+  - last_name: `input:last_name`
+  - email: `input:email`
+  - phone: `var:phone_clean`
+  - dealership_website: `input:dealership_website`
+  - dealership_primary_name: `const:`
+  - password: `input:password`
+  - password_string: `input:password`
+  - referral: `input:referral`
+  - @meta: `const:null:null`
+##### 6 Create Authentication Token as `var:authToken`
+  Inputs: 
+  - dbtable: `const:164`
+  - extras: `const:obj:{}`
+  - expiration: `const:int:86400`
+  - id: `var:user.id`
+#### Outputs: 1
+- authToken: `var:authToken`
+
+
+### /auth/me
+
+#3099 [[open]](https://api.autosnap.cloud/workspace/7-0/api/314/query/3099)
+
+URL: [https:/api.autosnap.cloud/JGlUJzp_/auth/me](https:/api.autosnap.cloud/JGlUJzp_/auth/me)
+
+#### Curl Command:
+```
+curl -X GET https://api.autosnap.cloud/api:JGlUJzp_/auth/me
+```
+
+Get the record belonging to the authentication token
+
+#### Steps: 1
+
+##### 1 Get Record **user** as `var:user`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `auth:id`
+  - lock: `const:bool:false`
+#### Outputs: 1
+- self: `var:user`
+
+
+### /auth/login
+
+#3100 [[open]](https://api.autosnap.cloud/workspace/7-0/api/314/query/3100)
+
+URL: [https:/api.autosnap.cloud/JGlUJzp_/auth/login](https:/api.autosnap.cloud/JGlUJzp_/auth/login)
+
+#### Curl Command:
+```
+curl -X POST https://api.autosnap.cloud/api:JGlUJzp_/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{ 
+    "email": "", 
+    "password": "" 
+  }'
+```
+
+Login and retrieve an authentication token
+
+#### Inputs: 2
+
+##### `email` (email) single (optional)
+- not nullable
+##### `password` (text) single (optional)
+- not nullable
+
+#### Steps: 5
+
+##### 1 Get Record **user** as `var:user`
+  Inputs: 
+  - field_name: `const:email`
+  - field_value: `input:email`
+##### 2 Precondition continue if:
+  -  `var:user` != `const:null:null`
+##### 3 Check Password as `var:pass_result`
+  Inputs: 
+  - text_password: `input:password`
+  - hash_password: `var:user.password`
+##### 4 Precondition continue if:
+  -  `var:pass_result` = `const:bool:true`
+##### 5 Create Authentication Token as `var:authToken`
+  Inputs: 
+  - id: `var:user.id`
+  - dbtable: `const:164`
+  - extras: `const:obj:{}`
+  - expiration: `const:int:86400`
+#### Outputs: 1
+- authToken: `var:authToken`

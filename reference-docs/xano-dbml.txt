@@ -1,0 +1,719 @@
+Project Drift {
+  database_type: 'PostgreSQL'
+  Note: 'This is was auto-generated for Drift by the State Change Extension for Xano on 7/10/2025'
+}
+
+// adviserly_dealer_links #185
+Table "adviserly_dealer_links_185" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  url text [default: ""]
+  dealer_website_link text [default: ""]
+  contacts_scraped bool [default: ""]
+  Note: 'Links to all the urls where adviserly is being used. We wills scrape these for salespeople contact data.'
+}
+
+// carousel_slides #152
+Table "carousel_slides_152" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  title text [default: ""]
+  text text [default: ""]
+  lottie_link text [default: ""]
+  order int [default: ""]
+  width_desktop int [default: ""]
+  height_desktop int [default: ""]
+  width_mobile int [default: ""]
+  height_mobile int [default: ""]
+}
+
+// collection_category_options #195
+Table "collection_category_options_195" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  collection_group_name text [default: ""]
+  Note: 'Default list of collection categories for users to classify vehicles for display within the collection on their personal drift.'
+}
+
+// contact #161
+Table "contact_161" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  updated_at epochms [default: ""]
+  user_id int [default: "0"]
+  name text [default: ""]
+  first_name text [default: ""]
+  last_name text [default: ""]
+  email email [default: ""]
+  phone text [default: ""]
+  address text [default: ""]
+  notes text [default: "null"]
+  contact_preferences_prompt text [default: ""]
+  user_personalization_prompt text [default: ""]
+  vehicle_preference_interests json [default: ""]
+  age_descriptor text [default: ""]
+  gender_descriptor text [default: ""]
+  Note: 'Stores contact information for users'
+}
+
+Ref: contact_161.user_id > user_164.id
+
+// contact_sessions #163
+Table "contact_sessions_163" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  contact_id int [default: ""]
+  drift_id uuid [default: ""]
+  parent_drift_id uuid [default: ""]
+  drift_link_id uuid [default: ""]
+  action enum [default: ""]
+  Note: 'Tracks interactions with Drift links, including clicks and views.'
+}
+
+Ref: contact_sessions_163.contact_id > contact_161.id
+Ref: contact_sessions_163.drift_id > drift_154.id
+Ref: contact_sessions_163.parent_drift_id > drift_154.id
+Ref: contact_sessions_163.drift_link_id > drift_link_166.id
+
+// dealer_add_queue #192
+Table "dealer_add_queue_192" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  user_id int [default: ""]
+  dealership_website_url text [default: ""]
+  processing bool [default: ""]
+  initial_processing_complete bool [default: ""]
+  Note: 'Queue for new dealerships being added to Drift either by drift team or by user who has created an account that is not tied to a dealership, and they cannot find their dealership in the existing list.'
+}
+
+// dealership #165
+Table "dealership_165" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  mc_dealer_id text [default: ""]
+  mc_dealer_website_id text [default: ""]
+  type enum [default: ""]
+  name text [default: ""]
+  street_address text [default: ""]
+  phone_number text [default: ""]
+  website text [default: ""]
+  vehicle_count int [default: ""]
+  importing bool [default: ""]
+  initial_import_complete bool [default: ""]
+  last_import epochms [default: ""]
+}
+
+// debug_test_1751330880661 #396
+Table "debug_test_1751330880661_396" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  name text [default: ""]
+  email text [default: ""]
+}
+
+// debug_test_1751330918877 #397
+Table "debug_test_1751330918877_397" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  name text [default: ""]
+  email text [default: ""]
+}
+
+// debug_test_1751330994714 #398
+Table "debug_test_1751330994714_398" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  name text [default: ""]
+  email text [default: ""]
+}
+
+// drift #154
+Table "drift_154" {
+  id uuid [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  updated_at epochms [default: ""]
+  user_id int [default: ""]
+  dealership_id int [default: "0"]
+  drift_name text [default: ""]
+  drift_template_id int [default: "0"]
+  type enum [default: ""]
+  vehicle_id uuid [default: ""]
+  contact_id int [default: "0"]
+  standalone_vehicle_drift bool [default: ""]
+  total_views int [default: ""]
+  added_to_drift_count int [default: ""]
+}
+
+Ref: drift_154.user_id > user_164.id
+Ref: drift_154.dealership_id > dealership_165.id
+Ref: drift_154.drift_template_id > drift_template_175.id
+Ref: drift_154.vehicle_id > vehicle_150.id
+Ref: drift_154.contact_id > contact_161.id
+
+// driftaichat_shoppers #200
+Table "driftaichat_shoppers_200" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  user_driftbot_conversations_id int [default: "0"]
+  name text [default: ""]
+  Note: 'store and manage all shopper information as it relates to users/visitors creating shopper drifts via driftai chat.'
+}
+
+Ref: driftaichat_shoppers_200.user_driftbot_conversations_id > user_driftbot_conversations_197.id
+
+// driftai_chat_user_sessions #205
+Table "driftai_chat_user_sessions_205" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  ip_address text [default: ""]
+  session_id text [default: ""]
+  browser_fingerprint text [default: ""]
+  name text [default: ""]
+  user_email text [default: ""]
+  user_id int [default: "0"]
+  phone int [default: ""]
+  tokens_remaining_internal decimal [default: ""]
+  tokens_remaining_integer decimal [default: ""]
+  Note: 'Track all visitors and users of driftbot chat including relevant IP address information, and contact information. Chat users will be converted to regular drift users upon signup.'
+}
+
+Ref: driftai_chat_user_sessions_205.user_id > user_164.id
+
+// driftaichat_workflows #199
+Table "driftaichat_workflows_199" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  type text [default: ""]
+  required_fields text[] [default: ""]
+  optional_fields text[] [default: ""]
+  Note: 'Table that contains all the workflows necessary to power driftai chat tools for creation of drifts and other processes.'
+}
+
+// drift_content_personal #168
+Table "drift_content_personal_168" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  updated_at epochms [default: ""]
+  drift_id uuid [default: ""]
+  user_first_name text [default: ""]
+  user_last_name text [default: ""]
+  user_title text [default: ""]
+  bio_title_text text [default: ""]
+  bio_content_text text [default: ""]
+  user_profile_image text [default: ""]
+  vehicle_group_1_image text [default: ""]
+  vehicle_group_2_image text [default: ""]
+  vehicle_group_3_image text [default: ""]
+  input_field_title_text text [default: ""]
+  input_field_placeholder_text text [default: ""]
+  vehicle_group_1_desc_text text [default: ""]
+  vehicle_group_2_desc_text text [default: ""]
+  vehicle_group_3_desc_text text [default: ""]
+  vehicle_group_1_title_text text [default: ""]
+  vehicle_group_2_title_text text [default: ""]
+  vehicle_group_3_title_text text [default: ""]
+  vehicle_group_1_button_text text [default: ""]
+  vehicle_group_2_button_text text [default: ""]
+  vehicle_group_3_button_text text [default: ""]
+  faq_list obj[] [default: ""]
+  review_id int[] [default: "0"]
+  network_icons obj[] [default: ""]
+}
+
+Ref: drift_content_personal_168.drift_id > drift_154.id
+Ref: drift_content_personal_168.review_id > review_159.id
+
+// drift_content_shopper #171
+Table "drift_content_shopper_171" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  updated_at epochms [default: ""]
+  drift_id uuid [default: ""]
+  contact_id int [default: "0"]
+}
+
+Ref: drift_content_shopper_171.drift_id > drift_154.id
+Ref: drift_content_shopper_171.contact_id > contact_161.id
+
+// drift_content_vehicle #172
+Table "drift_content_vehicle_172" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  updated_at epochms [default: ""]
+  drift_id uuid [default: ""]
+  contact_id int [default: "0"]
+  vehicle_id uuid [default: ""]
+  ai_headline_description text [default: ""]
+  ai_key_features text[] [default: ""]
+  standalone_user_comment text [default: ""]
+}
+
+Ref: drift_content_vehicle_172.drift_id > drift_154.id
+Ref: drift_content_vehicle_172.contact_id > contact_161.id
+Ref: drift_content_vehicle_172.vehicle_id > vehicle_150.id
+
+// drift_interactions #189
+Table "drift_interactions_189" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  parent_drift_id text [default: ""]
+  drift_id text [default: ""]
+  interaction_type enum [default: ""]
+  visitor_ip text [default: ""]
+  vehicle_id uuid [default: ""]
+  Note: 'engagement with a drift on the drift landing page'
+}
+
+Ref: drift_interactions_189.vehicle_id > vehicle_150.id
+
+// drift_landing_framer_engagement #196
+Table "drift_landing_framer_engagement_196" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  ip_address text [default: ""]
+  action text [default: ""]
+  drift_link_id text [default: ""]
+  vehicle_id text [default: ""]
+  notes text [default: ""]
+  signup_name text [default: ""]
+  signup_email text [default: ""]
+  signup_phone text [default: ""]
+  signup_dealershipwebsite text [default: ""]
+  signup_password text [default: ""]
+  signup_referralcode text [default: ""]
+}
+
+// drift_link #166
+Table "drift_link_166" {
+  id uuid [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  updated_at epochms [default: ""]
+  type enum [default: ""]
+  drift_id uuid [default: ""]
+  qr_code_image blob_img [default: ""]
+}
+
+Ref: drift_link_166.drift_id > drift_154.id
+
+// drift_relation #176
+Table "drift_relation_176" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  parent_drift_id uuid [default: ""]
+  child_drift_id uuid [default: ""]
+  contact_id int [default: "0"]
+  collection_group enum [default: ""]
+  user_comment text [default: ""]
+  ai_headline_description text [default: ""]
+  ai_key_features text[] [default: ""]
+}
+
+Ref: drift_relation_176.parent_drift_id > drift_154.id
+Ref: drift_relation_176.child_drift_id > drift_154.id
+Ref: drift_relation_176.contact_id > contact_161.id
+
+// drift_sales_lead_data #193
+Table "drift_sales_lead_data_193" {
+  id int [pk, unique, default: ""]
+  name text [default: ""]
+  title text [default: ""]
+  bio_notes text [default: ""]
+  email email [default: ""]
+  dealership_name text [default: ""]
+  dealership_website text [default: ""]
+  call_number text [default: ""]
+  profile_picture_url text [default: ""]
+  bio_text text [default: ""]
+  reviews obj[] [default: ""]
+  user_id int [default: "0"]
+  user_created bool [default: ""]
+  reviews_created bool [default: ""]
+  personal_drift_created bool [default: ""]
+  contact_group text [default: ""]
+  email_message_id text [default: ""]
+  email_sent bool [default: ""]
+  email_delivered bool [default: ""]
+  email_opened bool [default: ""]
+  num_opens int [default: ""]
+  email_blocked bool [default: ""]
+  email_clicked bool [default: ""]
+  num_clicks int [default: ""]
+  email_error bool [default: ""]
+  invalid_email bool [default: ""]
+  email_bounced bool [default: ""]
+  unsubscribed bool [default: ""]
+}
+
+Ref: drift_sales_lead_data_193.user_id > user_164.id
+
+// drift_share_links #191
+Table "drift_share_links_191" {
+  id uuid [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  parent_drift_id text [default: ""]
+  drift_id text [default: ""]
+  visitor_ip text [default: ""]
+  type enum [default: ""]
+  standalone bool [default: ""]
+  vehicle_id uuid [default: ""]
+  is_similar bool [default: ""]
+  redirect_params json [default: ""]
+  Note: 'share links are generated on the fly when someone clicks the "share" button on a drift page.'
+}
+
+Ref: drift_share_links_191.vehicle_id > vehicle_150.id
+
+// drift_template #175
+Table "drift_template_175" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  template_name text [default: ""]
+  user_id int [default: "0"]
+  primary_color text [default: "#FE4C00"]
+  secondary_color text [default: "#9BA1A5"]
+  background_color text [default: "#F7F8FA"]
+  base_text_color text [default: "#333333"]
+  font text [default: "Inter"]
+  Note: 'template settings for personal drifts'
+}
+
+Ref: drift_template_175.user_id > user_164.id
+
+// drift_template_personal_deprecated #167
+Table "drift_template_personal_deprecated_167" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  drift_id uuid [default: ""]
+  primary_color text [default: "#FE4C00"]
+  secondary_color text [default: "#9BA1A5"]
+  background_color text [default: "#F7F8FA"]
+  base_text_color text [default: "#333333"]
+  font text [default: "Inter"]
+  section_nav bool [default: "1"]
+  section_hero bool [default: "1"]
+  section_input_field bool [default: "1"]
+  section_vehicle_groups bool [default: "1"]
+  section_chat bool [default: "1"]
+  section_reviews bool [default: "1"]
+  section_q_a bool [default: "1"]
+  section_footer bool [default: "1"]
+  network_icons_visible obj[] [default: ""]
+  Note: 'template settings for personal drifts'
+}
+
+Ref: drift_template_personal_deprecated_167.drift_id > drift_154.id
+
+// drift_template_shopper_deprecated #169
+Table "drift_template_shopper_deprecated_169" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  drift_id uuid [default: ""]
+  primary_color text [default: "#FE4C00"]
+  secondary_color text [default: "#9BA1A5"]
+  background_color text [default: "#F7F8FA"]
+  base_text_color text [default: "#333333"]
+  font text [default: "Inter"]
+  section_nav bool [default: "1"]
+  section_hero bool [default: "1"]
+  user_vehicle_picks bool [default: "1"]
+  search_preference_input bool [default: "1"]
+  similar_vehicles bool [default: "1"]
+  section_footer bool [default: "1"]
+  Note: 'template settings for personal drifts'
+}
+
+Ref: drift_template_shopper_deprecated_169.drift_id > drift_154.id
+
+// drift_template_vehicle_deprecated #170
+Table "drift_template_vehicle_deprecated_170" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  drift_id uuid [default: ""]
+  primary_color text [default: "#FE4C00"]
+  secondary_color text [default: "#9BA1A5"]
+  background_color text [default: "#F7F8FA"]
+  base_text_color text [default: "#333333"]
+  font text [default: "Inter"]
+  section_nav bool [default: "1"]
+  section_shopper_name bool [default: "1"]
+  section_hero bool [default: "1"]
+  section_headline_description bool [default: "1"]
+  section_key_features bool [default: "1"]
+  section_vehicle_details bool [default: "1"]
+  section_input_vehicle_question bool [default: "1"]
+  section_similar_vehicles bool [default: "1"]
+  section_footer bool [default: "1"]
+  Note: 'template settings for personal drifts'
+}
+
+Ref: drift_template_vehicle_deprecated_170.drift_id > drift_154.id
+
+// drift_views #188
+Table "drift_views_188" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  parent_drift_id text [default: ""]
+  drift_id text [default: ""]
+  visitor_ip text [default: ""]
+  drift_share_links_id uuid [default: ""]
+  type enum [default: ""]
+  standalone bool [default: ""]
+  vehicle_id uuid [default: ""]
+  Note: 'log of all drift views'
+}
+
+Ref: drift_views_188.drift_share_links_id > drift_share_links_191.id
+Ref: drift_views_188.vehicle_id > vehicle_150.id
+
+// lead #162
+Table "lead_162" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  drift_id uuid [default: ""]
+  contact_id int [default: ""]
+  user_id int [default: ""]
+  Note: 'Stores leads generated from Drift engagements, linking contacts to users and specific Drifts.'
+}
+
+Ref: lead_162.drift_id > drift_154.id
+Ref: lead_162.contact_id > contact_161.id
+Ref: lead_162.user_id > user_164.id
+
+// marketcheck_import_errors #194
+Table "marketcheck_import_errors_194" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  api_request json [default: ""]
+  api_response json [default: ""]
+  Note: 'Error log for marketcheck imports when an api response resolves to anything other than 200'
+}
+
+// review #159
+Table "review_159" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  source text [default: ""]
+  contact_id int [default: "0"]
+  shopper_name text [default: ""]
+  rating int [default: ""]
+  text_content text [default: ""]
+  user_id int [default: ""]
+  Note: 'Stores reviews given by salespeople about shoppers'
+}
+
+Ref: review_159.contact_id > contact_161.id
+Ref: review_159.user_id > user_164.id
+
+// scraped_salesrep_data_adviserly #186
+Table "scraped_salesrep_data_adviserly_186" {
+  id int [pk, unique, default: ""]
+  name text [default: ""]
+  profile_picture_url text [default: ""]
+  adviserly_url text [default: ""]
+  bio_text text [default: ""]
+  reviews obj [default: ""]
+  call_number text [default: ""]
+  personal bool [default: ""]
+}
+
+// table #364
+Table "table_364" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  name text [default: ""]
+  email text [default: ""]
+}
+
+// user #164
+Table "user_164" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  account_status enum [default: ""]
+  driftai_chat_user_sessions_id int[] [default: "0"]
+  name text [default: ""]
+  first_name text [default: ""]
+  last_name text [default: ""]
+  email email [default: ""]
+  user_signup_ip_address text [default: ""]
+  user_drift_change_request text [default: ""]
+  signup_test_painpoint_response text [default: ""]
+  phone int [default: ""]
+  dealership_website text [default: ""]
+  dealership_primary_name text [default: ""]
+  profile_picture_url text [default: ""]
+  password password [default: ""]
+  password_string text [default: ""]
+  tokens_remaining_internal decimal [default: ""]
+  tokens_remaining_integer decimal [default: ""]
+  referral text [default: ""]
+  chatbot_prompt text [default: ""]
+  google_oauth json [default: ""]
+}
+
+Ref: user_164.driftai_chat_user_sessions_id > driftai_chat_user_sessions_205.id
+
+// user_dealership #160
+Table "user_dealership_160" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  user_id int [default: ""]
+  dealership_id int [default: "0"]
+  Note: 'Stores the many-to-many relationship between users and dealerships'
+}
+
+Ref: user_dealership_160.user_id > user_164.id
+Ref: user_dealership_160.dealership_id > dealership_165.id
+
+// user_driftbot_conversations #197
+Table "user_driftbot_conversations_197" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  name text [default: ""]
+  model text [default: ""]
+  visitor_ip_address text [default: ""]
+  user_id int [default: "0"]
+  driftai_chat_user_sessions_id int [default: "0"]
+  user_name text [default: ""]
+  message_count int [default: ""]
+  intent_token_total int [default: ""]
+  agent_token_total int [default: ""]
+  ai_token_total_count int [default: ""]
+  driftaichat_workflows_id int [default: "0"]
+  collected_data json [default: ""]
+  workflow_state obj [default: ""]
+  status enum [default: ""]
+  dealer_inventory_loading bool [default: ""]
+  preference_search_loading bool [default: ""]
+  preference_search_complete bool [default: ""]
+  creation_pending bool [default: ""]
+  creation_progress_internal enum [default: ""]
+  drift_showroom_link text [default: ""]
+  debug_logs json [default: ""]
+  Note: 'for all conversations a user or visitor has with driftbot to take an action using MPC'
+}
+
+Ref: user_driftbot_conversations_197.user_id > user_164.id
+Ref: user_driftbot_conversations_197.driftai_chat_user_sessions_id > driftai_chat_user_sessions_205.id
+Ref: user_driftbot_conversations_197.driftaichat_workflows_id > driftaichat_workflows_199.id
+
+// user_driftbot_messages #198
+Table "user_driftbot_messages_198" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  role text [default: ""]
+  content text [default: ""]
+  message_id text [default: ""]
+  execution_id text [default: ""]
+  index int [default: ""]
+  user_driftbot_conversations_id int [default: "0"]
+  tool_response json [default: ""]
+  token_usage json [default: ""]
+  Note: 'for all messages related to a conversation between driftbot and a user/visitor related to MPC'
+}
+
+Ref: user_driftbot_messages_198.user_driftbot_conversations_id > user_driftbot_conversations_197.id
+
+// users #399
+Table "users_399" {
+  id int [pk, unique, default: ""]
+  email email [default: ""]
+  name text [default: ""]
+  created_at epochms [default: "now"]
+}
+
+// vehicle #150
+Table "vehicle_150" {
+  id uuid [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  updated_at epochms [default: ""]
+  external_id text [default: ""]
+  mc_dealer_id text [default: ""]
+  dealer_name text [default: ""]
+  dealership_id int [default: "0"]
+  vin text [default: ""]
+  mc_data_exists bool [default: ""]
+  mc_listing_id text [default: ""]
+  make text [default: ""]
+  model text [default: ""]
+  year int [default: ""]
+  heading text [default: ""]
+  stocknum text [default: ""]
+  condition enum [default: ""]
+  certified bool [default: ""]
+  model_num text [default: ""]
+  body text [default: ""]
+  transmission text [default: ""]
+  series text [default: ""]
+  door_count int [default: ""]
+  odometer int [default: ""]
+  engine_cyl_count int [default: ""]
+  engine_displacement text [default: ""]
+  drivetrain_desc text [default: ""]
+  exterior_color text [default: ""]
+  interior_color text [default: ""]
+  msrp int [default: ""]
+  price int [default: ""]
+  inventory_date date [default: ""]
+  ai_api_vehicle_description_complete bool [default: ""]
+  description text [default: ""]
+  driftdetails_ai_completed bool [default: ""]
+  features text[] [default: ""]
+  ranked_features text[] [default: ""]
+  ai_description text [default: ""]
+  city_mpg int [default: ""]
+  hwy_mpg int [default: ""]
+  photos_last_modified text [default: ""]
+  series_detail text [default: ""]
+  engine text [default: ""]
+  fuel text [default: ""]
+  age_days int [default: ""]
+  vdp_link text [default: ""]
+  photo_url_list obj[] [default: ""]
+  carfax_1_owner bool [default: ""]
+  carfax_clean_title bool [default: ""]
+  base_ext_color text [default: ""]
+  base_int_color text [default: ""]
+  in_transit bool [default: ""]
+  photo_url_cached_list obj[] [default: ""]
+  price_change_percent int [default: ""]
+  first_seen epochms [default: ""]
+  last_seen epochms [default: ""]
+  scraped_date date [default: ""]
+  total_views int [default: ""]
+  autodev_decode bool [default: ""]
+  autodev_decoded_at epochms [default: ""]
+  autodev_decode_data json [default: ""]
+  initial_vdp_url_added text [default: ""]
+}
+
+Ref: vehicle_150.dealership_id > dealership_165.id
+
+// vehicle_drift_personalization #173
+Table "vehicle_drift_personalization_173" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  drift_id uuid [default: ""]
+  contact_id int [default: ""]
+  ai_personalized_headline_description text [default: ""]
+  personalized_key_features text[] [default: ""]
+  user_comment text [default: ""]
+  Note: 'stores all data related to contacts, and personalized data for vehicle drifts.'
+}
+
+Ref: vehicle_drift_personalization_173.drift_id > drift_154.id
+Ref: vehicle_drift_personalization_173.contact_id > contact_161.id
+
+// vehicle_feature_likes #174
+Table "vehicle_feature_likes_174" {
+  id int [pk, unique, default: ""]
+  created_at epochms [default: "now"]
+  liked_at epochms [default: ""]
+  contact_id int [default: ""]
+  vehicle_id uuid [default: ""]
+  feature text [default: ""]
+  Note: 'tracks the engagement of likes on vehicle features for specific cars based on contact interaction with vehicle drift page.'
+}
+
+Ref: vehicle_feature_likes_174.contact_id > contact_161.id
+Ref: vehicle_feature_likes_174.vehicle_id > vehicle_150.id
+

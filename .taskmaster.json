@@ -1,0 +1,81 @@
+{
+  "name": "Drift SaaS Migration",
+  "description": "Migration from n8n to LangGraph + Next.js with Theysis UI",
+  "version": "1.0.0",
+  "status": "active",
+  "priority": "high",
+  "created_at": "2025-01-10T00:00:00Z",
+  "updated_at": "2025-01-10T00:00:00Z",
+  "goals": [
+    "Migrate workflow engine from n8n to LangGraph",
+    "Replace WeWeb frontend with Next.js + Theysis",
+    "Maintain existing Xano backend",
+    "Optimize AI model costs and performance"
+  ],
+  "phases": [
+    {
+      "name": "Infrastructure Setup",
+      "description": "Next.js frontend and LangGraph service setup",
+      "week": 1,
+      "status": "planned"
+    },
+    {
+      "name": "Core Implementation", 
+      "description": "Frontend components and LangGraph workflow implementation",
+      "week": "2-3",
+      "status": "planned"
+    },
+    {
+      "name": "Advanced Features",
+      "description": "Real-time features and Theysis configuration",
+      "week": 4,
+      "status": "planned"
+    },
+    {
+      "name": "Testing & Deployment",
+      "description": "Testing strategy and production deployment",
+      "week": 5,
+      "status": "planned"
+    }
+  ],
+  "tech_stack": {
+    "frontend": ["Next.js 14+", "React 18+", "Theysis UI", "Zustand", "Tailwind CSS"],
+    "backend": ["Python 3.11+", "LangGraph", "FastAPI", "LangChain", "Redis"],
+    "database": ["Xano PostgreSQL"],
+    "ai_models": ["GPT-3.5-turbo", "Gemini 2.5 Flash"]
+  },
+  "apis": {
+    "xano_base_url": "https://api.autosnap.cloud",
+    "endpoints": [
+      "/session/create",
+      "/userchatsession/get_data", 
+      "/chat/message_complete",
+      "/webhook/n8n_data_collection",
+      "/auth/login",
+      "/auth/signup",
+      "/auth/me"
+    ]
+  },
+  "workflows": [
+    {
+      "id": 1,
+      "name": "General Chat",
+      "description": "Open-ended conversation with no data collection",
+      "model": "gpt-3.5-turbo"
+    },
+    {
+      "id": 2, 
+      "name": "Shopper Showroom",
+      "description": "Data collection for shopper showroom creation",
+      "required_fields": ["dealershipwebsite_url", "vehiclesearchpreference", "vehicledetailspage_urls", "shopper_name", "user_name", "user_phone"],
+      "optional_fields": ["gender_descriptor", "age_descriptor", "shopper_notes", "user_email"]
+    },
+    {
+      "id": 3,
+      "name": "Personal Showroom", 
+      "description": "Data collection for personal showroom creation",
+      "required_fields": ["dealershipwebsite_url", "vehicledetailspage_urls", "user_name", "user_phone", "user_email"],
+      "optional_fields": ["vehiclesearchpreference"]
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+# Task ID: 2
+# Title: Setup LangGraph Python Service
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Create the LangGraph service to replace the current n8n workflow engine while maintaining compatibility with the existing Xano backend.
+# Details:
+1. Initialize Python project with FastAPI framework:
+   ```bash
+   mkdir -p drift-langgraph/src/{workflows,models,utils}
+   cd drift-langgraph
+   python -m venv venv
+   source venv/bin/activate
+   pip install fastapi uvicorn langgraph langchain-openai langchain-google-genai pydantic python-dotenv redis
+   ```
+2. Create project structure as specified in PRD:
+   - src/
+     - __init__.py
+     - main.py (FastAPI app)
+     - workflows/
+     - models/
+     - utils/
+3. Set up FastAPI app in main.py with health check endpoint
+4. Create .env file with required environment variables:
+   ```
+   OPENAI_API_KEY=your_openai_key
+   GOOGLE_AI_API_KEY=your_gemini_key
+   XANO_WEBHOOK_URL=https://api.autosnap.cloud/api:owKhF9pX/webhook/data_collection_n8n
+   PORT=8000
+   ```
+5. Implement basic LangGraph state management
+6. Create Dockerfile for containerization:
+   ```dockerfile
+   FROM python:3.11-slim
+   WORKDIR /app
+   COPY requirements.txt .
+   RUN pip install --no-cache-dir -r requirements.txt
+   COPY . .
+   CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+   ```
+7. Generate requirements.txt file
+
+# Test Strategy:
+1. Verify FastAPI app starts successfully
+2. Test health check endpoint returns 200 OK
+3. Validate environment variables are loaded correctly
+4. Ensure Docker container builds and runs
+5. Test basic LangGraph state management functionality

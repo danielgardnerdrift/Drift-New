@@ -1,0 +1,282 @@
+## load_v2_optimized 
+
+#338 Canonical ID: oKjBm4U- [[open]](https://api.autosnap.cloud/workspace/7-0/api/338)
+
+
+Optimized load endpoints - rebuilt from complex conditional logic and 87-step monolithic functions to clean, maintainable XanoScript with proper error handling and performance
+
+### /load/personal/{drift_link_id}
+
+#3304 [[open]](https://api.autosnap.cloud/workspace/7-0/api/338/query/3304)
+
+URL: [https:/api.autosnap.cloud/oKjBm4U-/load/personal/{drift_link_id}](https:/api.autosnap.cloud/oKjBm4U-/load/personal/{drift_link_id})
+(**Note: Curly braces indicate dynamic path variables**)
+
+#### Curl Command:
+```
+curl -X GET https://api.autosnap.cloud/api:oKjBm4U-/load/personal/{drift_link_id}
+```
+
+Optimized personal drift loader - fixes conditional logic errors and improves performance
+
+#### Inputs: 1
+
+##### `drift_link_id` (text) single (required)
+- The drift link ID to load personal showroom
+- not nullable
+
+#### Steps: 14
+
+##### 1 Get Record **drift_link** as `var:drift_link`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:drift_link_id`
+##### 2 Conditional - if:
+  -  `var:drift_link` = `const:null:null`
+**then**
+##### 2.1 Throw Error
+  - value: `Invalid drift link ID`
+##### 3 Get Record **drift** as `var:drift`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:drift_link.drift_id`
+##### 4 Conditional - if:
+  -  `var:drift` = `const:null:null`
+**then**
+##### 4.1 Throw Error
+  - value: `Drift record not found`
+##### 5 Conditional - if:
+  -  `var:drift.type` != `const:personal`
+**then**
+##### 5.1 Throw Error
+  - value: `Expected personal drift type`
+##### 6 Get Record **user** as `var:user`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:drift.user_id`
+##### 7 Get Record **dealership** as `var:dealership`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:user.dealership_id`
+##### 8 Query all Records from **drift** as `var:vehicle_drifts`
+  - Custom Filters:
+    -  `col:drift.user_id` = `var:drift.user_id`
+    - AND `col:drift.type` = `const:vehicle`
+  - as raw list
+##### 9 Query all Records from **vehicle** as `var:vehicles`
+  - Custom Filters:
+    -  `col:vehicle.dealership_id` = `var:dealership.id`
+  - as raw list
+##### 10 Query all Records from **Stores contact information for users** as `var:contacts`
+  - Custom Filters:
+    -  `col:contact.user_id` = `var:user.id`
+  - as raw list
+##### 11 Create Variable as `var:response_data`
+  From: `const:expr:{
+  drift: $drift
+  drift_link: $drift_link
+  user: $user
+  dealership: $dealership
+  vehicles: $vehicles
+  vehicle_drifts: $vehicle_drifts
+  contacts: $contacts
+  total_vehicles: $vehicles|length
+  total_contacts: $contacts|length
+  optimization_version: "v2_load_personal"
+}`
+#### Outputs: 1
+- self: `var:response_data`
+
+### /load/shopper/{drift_link_id}
+
+#3303 [[open]](https://api.autosnap.cloud/workspace/7-0/api/338/query/3303)
+
+URL: [https:/api.autosnap.cloud/oKjBm4U-/load/shopper/{drift_link_id}](https:/api.autosnap.cloud/oKjBm4U-/load/shopper/{drift_link_id})
+(**Note: Curly braces indicate dynamic path variables**)
+
+#### Curl Command:
+```
+curl -X GET https://api.autosnap.cloud/api:oKjBm4U-/load/shopper/{drift_link_id}
+```
+
+Optimized shopper drift loader - fixes conditional logic errors and improves performance
+
+#### Inputs: 1
+
+##### `drift_link_id` (text) single (required)
+- The drift link ID to load shopper showroom
+- not nullable
+
+#### Steps: 14
+
+##### 1 Get Record **drift_link** as `var:drift_link`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:drift_link_id`
+##### 2 Conditional - if:
+  -  `var:drift_link` = `const:null:null`
+**then**
+##### 2.1 Throw Error
+  - value: `Invalid drift link ID`
+##### 3 Get Record **drift** as `var:drift`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:drift_link.drift_id`
+##### 4 Conditional - if:
+  -  `var:drift` = `const:null:null`
+**then**
+##### 4.1 Throw Error
+  - value: `Drift record not found`
+##### 5 Conditional - if:
+  -  `var:drift.type` != `const:shopper`
+**then**
+##### 5.1 Throw Error
+  - value: `Expected shopper drift type`
+##### 6 Get Record **user** as `var:user`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:drift.user_id`
+##### 7 Get Record **Stores contact information for users** as `var:contact`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:drift.contact_id`
+##### 8 Get Record **dealership** as `var:dealership`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:user.dealership_id`
+##### 9 Query all Records from **drift** as `var:vehicle_drifts`
+  - Custom Filters:
+    -  `col:drift.user_id` = `var:drift.user_id`
+    - AND `col:drift.type` = `const:vehicle`
+    - AND `col:drift.contact_id` = `var:drift.contact_id`
+  - as raw list
+##### 10 Query all Records from **vehicle** as `var:vehicles`
+  - Custom Filters:
+    -  `col:vehicle.dealership_id` = `var:dealership.id`
+  - as raw list
+##### 11 Create Variable as `var:response_data`
+  From: `const:expr:{
+  drift: $drift
+  drift_link: $drift_link
+  user: $user
+  contact: $contact
+  dealership: $dealership
+  vehicles: $vehicles
+  vehicle_drifts: $vehicle_drifts
+  total_vehicles: $vehicles|length
+  optimization_version: "v2_load_shopper"
+}`
+#### Outputs: 1
+- self: `var:response_data`
+
+### /load/vehicle/{template_id}/{vehicle_id}/{contact_id}/{user_id}/{is_similar}
+
+#3305 [[open]](https://api.autosnap.cloud/workspace/7-0/api/338/query/3305)
+
+URL: [https:/api.autosnap.cloud/oKjBm4U-/load/vehicle/{template_id}/{vehicle_id}/{contact_id}/{user_id}/{is_similar}](https:/api.autosnap.cloud/oKjBm4U-/load/vehicle/{template_id}/{vehicle_id}/{contact_id}/{user_id}/{is_similar})
+(**Note: Curly braces indicate dynamic path variables**)
+
+#### Curl Command:
+```
+curl -X GET https://api.autosnap.cloud/api:oKjBm4U-/load/vehicle/{template_id}/{vehicle_id}/{contact_id}/{user_id}/{is_similar}?template_id=&vehicle_id=&contact_id=&user_id=&is_similar=
+```
+
+Optimized vehicle drift loader - reduces 87-step monolithic function to clean modular XanoScript
+
+#### Inputs: 5
+
+##### `template_id` (text) single (required)
+- Template ID for vehicle display
+- not nullable
+##### `vehicle_id` (text) single (required)
+- Vehicle ID to load
+- not nullable
+##### `contact_id` (text) single (required)
+- Contact ID for personalization
+- not nullable
+##### `user_id` (text) single (required)
+- User ID
+- not nullable
+##### `is_similar` (text) single (required)
+- Whether this is a similar vehicle (true/false)
+- not nullable
+
+#### Steps: 18
+
+##### 1 Get Record **vehicle** as `var:vehicle`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:vehicle_id`
+##### 2 Conditional - if:
+  -  `var:vehicle` = `const:null:null`
+**then**
+##### 2.1 Throw Error
+  - value: `Vehicle not found`
+##### 3 Get Record **user** as `var:user`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:user_id`
+##### 4 Conditional - if:
+  -  `var:user` = `const:null:null`
+**then**
+##### 4.1 Throw Error
+  - value: `User not found`
+##### 5 Get Record **Stores contact information for users** as `var:contact`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `input:contact_id`
+##### 6 Get Record **dealership** as `var:dealership`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:user.dealership_id`
+##### 7 Conditional - if:
+  -  `input:is_similar` = `const:true`
+**then**
+##### 7.1 get vehicles that are similar to the parent vehicle based on different rules and rankings. This is the basic function and doesn't modify any records in any db tables. as `var:similar_vehicles`
+  Inputs: 
+  - vehicle_id: `input:vehicle_id`
+  - dealership_id: `var:dealership.id`
+##### 7.2 Create Variable as `var:similar_vehicles`
+  From: `const:array:[]`
+##### 8 Query all Records from **drift** as `var:existing_drift`
+  - Custom Filters:
+    -  `col:drift.vehicle_id` = `input:vehicle_id`
+    - AND `col:drift.user_id` = `input:user_id`
+    - AND `col:drift.contact_id` = `input:contact_id`
+  - as single row (no array)
+  - sorted by `drift.created_at` descending
+##### 9 Conditional - if:
+  -  `var:existing_drift` != `const:null:null`
+**then**
+##### 9.1 Create Variable as `var:vehicle_drift`
+  From: `var:existing_drift`
+##### 9.2 Optimized vehicle drift creation - modular design replaces 81-step monolithic function with clean, maintainable logic as `var:vehicle_drift_result`
+  Inputs: 
+  - user_id: `input:user_id`
+  - vehicle_id: `input:vehicle_id`
+  - contact_id: `input:contact_id`
+  - vehicle_drift_type: `const:parent_shopper`
+  - vehicle_collection_group_name: `const:user_recommended_vehicles`
+  - drift_name: `const:Vehicle Drift`
+##### 9.3 Get Record **drift** as `var:vehicle_drift`
+  Inputs: 
+  - field_name: `const:id`
+  - field_value: `var:vehicle_drift_result.drift_id`
+##### 10 Get Record **drift_link** as `var:drift_link`
+  Inputs: 
+  - field_name: `const:drift_id`
+  - field_value: `var:vehicle_drift.id`
+##### 11 Create Variable as `var:response_data`
+  From: `const:expr:{
+  vehicle: $vehicle
+  vehicle_drift: $vehicle_drift
+  drift_link: $drift_link
+  user: $user
+  contact: $contact
+  dealership: $dealership
+  similar_vehicles: $similar_vehicles
+  is_similar_request: $input.is_similar
+  optimization_version: "v2_load_vehicle_with_v2_creation"
+}`
+#### Outputs: 1
+- self: `var:response_data`

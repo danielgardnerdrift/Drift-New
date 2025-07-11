@@ -1,0 +1,893 @@
+{
+  "name": "driftbot",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "driftbot-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1220,
+        200
+      ],
+      "id": "e8dc9449-4910-4e40-9e53-71faa83064f6",
+      "name": "Webhook",
+      "webhookId": "c1b7c05b-b1f2-47bd-b7d6-78d87dc9bfc7"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"name\": \"general_chat_response\",\n  \"description\": \"Handle general chat conversations with workflow routing\",\n  \"parameters\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"selected_workflow_id\": {\n        \"type\": \"integer\", \n        \"enum\": [1, 2, 3],\n        \"description\": \"Workflow ID - use 1 for general chat, 2 for shopper showroom, 3 for personal showroom\"\n      },\n      \"role\": {\n        \"type\": \"string\",\n        \"enum\": [\"assistant\"],\n        \"description\": \"Always 'assistant'\"\n      },\n      \"content\": {\n        \"type\": \"string\",\n        \"description\": \"The assistant's conversational response to the user\"\n      },\n      \"switch\": {\n        \"type\": \"boolean\",\n        \"description\": \"True if user wants to switch to a different workflow (2 or 3), false for continuing general chat\"\n      }\n    },\n    \"required\": [\"selected_workflow_id\", \"role\", \"content\", \"switch\"],\n    \"additionalProperties\": false\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        100,
+        120
+      ],
+      "id": "1e39c1c1-4339-4a8c-823d-fd16d92b6aeb",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -200,
+        120
+      ],
+      "id": "56a97aec-a137-42b0-aafd-5f474d2c845a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "fV6ZtMPTmEOuvX9m",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.query.conversation_id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -40,
+        120
+      ],
+      "id": "7a869980-ba57-4562-bb5b-5cf3b678e74d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"name\": \"update_showroom_data\",\n  \"description\": \"Extract and update showroom data from user message\",\n  \"parameters\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"workflow_id\": {\n        \"type\": \"integer\",\n        \"description\": \"Current workflow ID\"\n      },\n      \"collected_data\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"dealershipwebsite_url\": {\n            \"type\": \"string\",\n            \"description\": \"Dealership website URL\"\n          },\n          \"vehicledetailspage_urls\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\",\n              \"format\": \"uri\",\n              \"description\": \"Vehicle detail page URL from dealership website\"\n            },\n            \"description\": \"Array of vehicle detail page URLs\"\n          },\n          \"user_name\": {\n            \"type\": \"string\",\n            \"description\": \"User's name\"\n          },\n          \"shopper_name\": {\n            \"type\": \"string\",\n            \"description\": \"Name of person showroom is for\"\n          },\n          \"user_email\": {\n            \"type\": \"string\",\n            \"format\": \"email\",\n            \"description\": \"Contact email\"\n          },\n          \"user_phone\": {\n            \"type\": \"integer\",\n            \"description\": \"Contact phone number\"\n          },\n          \"vehiclesearchpreference\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"properties\": {\n                \"make\": {\"type\": \"string\"},\n                \"model\": {\"type\": \"string\"},\n                \"trim\": {\n                  \"type\": \"array\",\n                  \"items\": {\"type\": \"string\"}\n                },\n                \"year_min\": {\"type\": \"integer\"},\n                \"year_max\": {\"type\": \"integer\"},\n                \"price_min\": {\"type\": \"number\"},\n                \"price_max\": {\"type\": \"number\"},\n                \"exterior_color\": {\n                  \"type\": \"array\",\n                  \"items\": {\"type\": \"string\"}\n                },\n                \"interior_color\": {\n                  \"type\": \"array\",\n                  \"items\": {\"type\": \"string\"}\n                },\n                \"miles_min\": {\"type\": \"integer\"},\n                \"miles_max\": {\"type\": \"integer\"},\n                \"condition\": {\n                  \"type\": \"array\",\n                  \"items\": {\n                    \"type\": \"string\",\n                    \"enum\": [\"New\", \"Used\", \"Certified\"]\n                  }\n                },\n                \"body_style\": {\"type\": \"string\"}\n              }\n            },\n            \"description\": \"Vehicle search preferences\"\n          },\n          \"gender_descriptor\": {\n            \"type\": \"string\",\n            \"enum\": [\"Man\", \"Woman\"],\n            \"description\": \"Gender descriptor inferred from pronouns\"\n          },\n          \"age_descriptor\": {\n            \"type\": \"string\",\n            \"enum\": [\"20s\", \"30s\", \"40s\", \"50s\", \"60s\", \"70s\", \"80s\"],\n            \"description\": \"Age range descriptor\"\n          },\n          \"shopper_notes\": {\n            \"type\": \"string\",\n            \"description\": \"Lifestyle, interests, family details\"\n          },\n          \"location_descriptor\": {\n            \"type\": \"string\",\n            \"description\": \"Geographic location\"\n          }\n        },\n        \"description\": \"Object containing all collected field data\"\n      },\n      \"next_field\": {\n        \"type\": \"string\",\n        \"description\": \"Next field to prioritize collecting\"\n      },\n      \"role\": {\n        \"type\": \"string\",\n        \"enum\": [\"assistant\"],\n        \"description\": \"Always 'assistant'\"\n      },\n      \"workflow_status\": {\n        \"type\": \"string\",\n        \"description\": \"Current workflow status\"\n      },\n      \"content\": {\n        \"type\": \"string\",\n        \"description\": \"Conversational response to user, including next steps\"\n      },\n      \"newly_collected_fields\": {\n        \"type\": \"array\",\n        \"items\": { \"type\": \"string\" },\n        \"description\": \"Array of field names newly collected or updated\"\n      }\n    },\n    \"required\": [\"workflow_id\", \"collected_data\", \"next_field\", \"role\", \"content\", \"newly_collected_fields\"],\n    \"additionalProperties\": false\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        140,
+        700
+      ],
+      "id": "2376a5fd-ea1e-4bc6-9f4a-81ffedae5b79",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook').item.json.query.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=## Current Context\n- Workflow ID: {{ $json.choices[0].message.content.selected_workflow_id }}\n- Already collected fields: {{ $('Webhook').item.json.query.collected_fields }}\n- Next priority field: {{ $('Webhook').item.json.query.next_field }}\n- User's latest message: {{ $('Webhook').item.json.query.message }}\n- Intent reasoning: {{ $('OpenAI').item.json.choices[0].message.content.reasoning }}\n- Current workflow_status: {{ $('Webhook').item.json.query.workflow_status }}\n\n## CRITICAL INSTRUCTION: EXTRACT ALL AVAILABLE DATA\n**You MUST extract ALL data you can identify from the user's message, starting with `next_field`, and proceeding to other required fields, then optional fields. Parse the entire message thoroughly and capture every piece of relevant information.**\n\n**DO NOT CHANGE OR SET A NEW WORKFLOW ID. ALWAYS PASS THROUGH THE CURRENT CONTEXT WORKFLOW ID**\n\n**Example:**\n- If `shopper_name` already exists with value \"John Doe\", and user mentions \"John\", do NOT add `shopper_name` to `newly_collected_fields`\n- Only add to `newly_collected_fields` if the field was previously missing or user says \"change my name to...\"\n\n## Field Definitions\n\n### Workflow 2 (Create Shopper Drift Showroom)\n**Required Fields:**\n- `dealershipwebsite_url` (string): Dealership website URL\n- `vehicledetailspage_urls` (array of strings): Vehicle detail page URLs from the dealership website the shopper is interested in.\n- `user_name` (string): Your name\n- `shopper_name` (string): Name of person showroom is for\n- `user_phone` (integer): Contact phone\n- `vehiclesearchpreference` (array of objects): Vehicle criteria with:\n  - `make`, `model`, `trim` (array), `year_min/max`, `price_min/max`\n  - `exterior_color` (array), `interior_color` (array), `miles_min/max`\n  - `condition` (array: \"New\", \"Used\", \"Certified\"), `body_style`\n\n**Optional Fields:**\n- `gender_descriptor`: \"Man\" or \"Woman\" and should be inferred from pronouns that are used to describe the shopper.\n- `age_descriptor`: \"20s\", \"30s\", \"40s\", \"50s\", \"60s\", \"70s\", \"80s\"  \n- `shopper_notes` (string): Lifestyle, interests, family details\n- `location_descriptor` (string): Geographic location\n- `user_email` (string): Contact email\n\n### Workflow 3 (Create Personal Drift Showroom)\n**Required Fields:**\n- `dealershipwebsite_url`, `vehicledetailspage_urls`, `user_name`, `user_phone`, `user_email`\n**Optional Fields:**\n- `vehiclesearchpreference` (same structure as workflow 2)\n\n## Data Extraction Examples\n\n**Input:** \"I want to create a shopper drift for allie davis. she's mid-20's in age, likes her 2 kids and dog, and wants either a blue mercedes c-class sedan or BMW x3. price range is under 40k and miles needs to be below 10k. years 2022 and 2023 are what she wants. The vehicle pages are https://dealer.com/bmw-x3-2023 and https://dealer.com/mercedes-c-class-2022\"\n\n**Should Extract:**\n```json\n{\n  \"shopper_name\": \"allie davis\",\n  \"age_descriptor\": \"20s\", \n  \"shopper_notes\": \"allie davis has 2 kids and dog\",\n  \"vehicledetailspage_urls\": [\"https://dealer.com/bmw-x3-2023\", \"https://dealer.com/mercedes-c-class-2022\"],\n  \"vehiclesearchpreference\": [\n    {\n      \"make\": \"Mercedes\",\n      \"model\": \"C-Class\",\n      \"body_style\": \"sedan\", \n      \"exterior_color\": [\"blue\"],\n      \"price_max\": 40000,\n      \"miles_max\": 10000,\n      \"year_min\": 2022,\n      \"year_max\": 2023\n    },\n    {\n      \"make\": \"BMW\", \n      \"model\": \"X3\",\n      \"price_max\": 40000,\n      \"miles_max\": 10000,\n      \"year_min\": 2022,\n      \"year_max\": 2023\n    }\n  ]\n}\n```\n\n## Processing Instructions\n\n1. **OPTIONAL DATA COLLECTION**\n\n- IF {{ $('Webhook').item.json.query.workflow_status }} is equal to \"optional_collection\", ask user for all optional fields, but remind them they can proceed with creation at any time.\n- IF user indicates they want to proceed with creation, set \"workflow_status\" to \"showroom_in_progress\".\n- IF user does not indicate proceed with showroom creation, set \"workflow_status\" to current workflow_status.\n\n2. **COMPREHENSIVE DATA EXTRACTION**: \n   - Scan the entire user message for ANY field data\n   - Extract everything you can identify, not just the `next_field`\n   - Include partial/incomplete data - don't wait for complete information\n\n3. **Vehicle Detail Page URL Processing**:\n   - Extract vehicle detail page URLs from user messages\n   - These are specific pages on the dealership website that show individual vehicle listings the shopper is interested in.\n   - URLs should be complete and valid (starting with http:// or https://)\n   - When asking for vehicle detail page URLs, guide users: \"Please provide the specific webpage URLs for each vehicle to showcase on the showroom.\"\n\n4. **Age Translation**:\n   - \"mid-20's\" or \"20's\" → \"20s\"\n   - \"early 30s\" or \"30's\" → \"30s\"\n   - etc.\n\n5. **Vehicle Preferences**:\n   - Create separate objects for each vehicle mentioned\n   - Extract make, model, color, price, mileage, year constraints\n   - Convert \"under 40k\" → `price_max: 40000`\n   - Convert \"below 10k miles\" → `miles_max: 10000`\n\n6. **Shopper Notes**:\n   - Combine personal details: \"allie davis has 2 kids and dog\"\n   - Include lifestyle mentions, interests, family info\n\n7. **Update Logic**:\n   - Merge new data with existing `collected_data`\n   - If user provides new data for existing fields, update them\n   - List ALL newly collected/updated fields in `newly_collected_fields`\n\n8. **Next Field Priority**:\n   - Set to first missing required field\n   - If all required fields collected, set to next uncollected optional field\n   - If a field appears in collected_fields array, consider it COMPLETE - do not ask for it again\n   - Only set next_field to fields that are NOT in the collected_fields array\n   - Skip any field that already appears in collected_fields when determining next priority field\n\n9. **Conversational Response**:\n   - Acknowledge what you collected\n   - Ask for the next priority field\n   - Be encouraging and specific\n   - When asking for vehicle detail page URLs, provide helpful guidance on what these are.\n\n10. **Gender Translation**:\n    - \"him\" or \"he\" or \"his\" → \"Man\"\n    - \"her\" or \"she\" or \"hers\" → \"Woman\"\n    - Should be inferred from conversation\n\n11. **Showroom Creation Response**:\n    - When user indicates they want to proceed with showroom creation (e.g., \"proceed with creating showroom\", \"let's create it\", \"I'm ready\"):\n      - Set `workflow_status` to \"showroom_in_progress\"\n      - Respond with: \"Perfect! I have all the required information and I'm now processing your showroom creation. This should only take a few seconds!\"\n      - Do NOT ask for additional fields\n      - Do NOT continue data collection\n\n## Response Format\n```json\n{\n  \"workflow_id\": integer,\n  \"workflow_status\": string,\n  \"collected_data\": {\n    // ALL extracted data, existing + new\n  },\n  \"next_field\": \"string\", \n  \"role\": \"assistant\",\n  \"content\": \"conversational response\",\n  \"newly_collected_fields\": [\"array\", \"of\", \"field\", \"names\"]\n}\n```"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        500
+      ],
+      "id": "fa3bed9e-11a7-49da-8f91-6a1eeedced3f",
+      "name": "dataCollectionAgent"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.choices[0].message.content.selected_workflow_id }}",
+                    "rightValue": "={{ 1 }}",
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "8cbe5b3b-883c-4e90-8dce-207961cff8a0"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f36c9309-13de-43ae-9aea-8b94bed25286",
+                    "leftValue": "={{ $json.choices[0].message.content.selected_workflow_id }}",
+                    "rightValue": "={{ 2 }}",
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "07462f4b-eb27-4e18-b417-5079081a1e97",
+                    "leftValue": "={{ $json.choices[0].message.content.selected_workflow_id }}",
+                    "rightValue": "={{3}}",
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -404,
+        200
+      ],
+      "id": "0d268d25-c17d-43ad-be02-bec1898fac71",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.query.conversation_id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -20,
+        700
+      ],
+      "id": "4ecf62a7-3496-4e11-b473-c30a5c73daec",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook').item.json.query.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are driftBot, an assistant for car sales experts. Help the user (sales expert) with anything they need. You are capable of searching the web, writing copy, vehicle research, etc.\n\n**ALWAYS include total tokens used**\n\n1. General chat (workflow_id = 1): The user just wants to chat or ask questions.\n2. Shopper showroom creation (workflow_id = 2): The user wants to create a showroom for a shopper (e.g. a customer).\n3. Personal showroom creation (workflow_id = 3): The user wants to create a showroom for themselves.\n\nInstructions:\n- Based on the user's message, detect which workflow they want.\n- IF {{ $('Webhook').item.json.query.workflow_id }} is not equal to selected_workflow_id, set \"switch\" to true in json response.\n- If no showroom creation is mentioned, assume workflow_id = 1.\n- Use friendly, helpful language in your content message to guide the user.\n- Always respond with a message to the user via \"content\" field in response.\n\nYou must respond with ONLY valid JSON in the following format (no additional text, explanations, or markdown):\n\nResponse schema:\n\n{\n  \"name\": \"general_chat_response\",\n  \"description\": \"Handle general chat conversations with workflow routing\",\n  \"parameters\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"selected_workflow_id\": {\n        \"type\": \"integer\", \n        \"enum\": [1, 2, 3],\n        \"description\": \"Workflow ID - use 1 for general chat, 2 for shopper showroom, 3 for personal showroom\"\n      },\n      \"role\": {\n        \"type\": \"string\",\n        \"enum\": [\"assistant\"],\n        \"description\": \"Always 'assistant'\"\n      },\n      \"content\": {\n        \"type\": \"string\",\n        \"description\": \"The assistant's conversational response to the user\"\n      },\n      \"switch\": {\n        \"type\": \"boolean\",\n        \"description\": \"True if user wants to switch to a different workflow (2 or 3), false for continuing general chat\"\n      }\n    },\n    \"required\": [\"selected_workflow_id\", \"role\", \"content\", \"switch\"],\n    \"additionalProperties\": false\n  }\n}",
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -120,
+        -100
+      ],
+      "id": "08b9bf8d-1a5d-425a-92d4-79bba7a4bfe0",
+      "name": "GeneralChat",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        60
+      ],
+      "id": "c0410d2d-7d3b-4eec-8213-9ca15f5d9604",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=# driftBot Intent Detection System\n\nYou are driftBot's intent detection system. Analyze the user's message and current workflow state to determine the correct workflow routing.\n\n## Current Context\n- Current workflow_id: {{ $json.query.workflow_id }}\n- User message: {{ $json.query.message }}\n\n## Available Workflows\n1. **General chat** (workflow_id = 1): General questions, greetings, or unclear intent\n2. **Shopper showroom** (workflow_id = 2): Creating a showroom for a customer\n3. **Personal showroom** (workflow_id = 3): Creating a personal showroom for the user\n\n## Decision Logic\n\n### If currently in workflow 2 or 3 (data collection mode):\n**STAY in current workflow** for:\n- User data: names, contact info, URLs, preferences, specifications\n- Continuation responses: \"ok\", \"sure\", \"yes\", \"next\"\n- Any input that appears to be answering data collection questions\n\n**SWITCH workflows** only for explicit requests:\n- \"personal showroom\" OR \"for me\" → switch to workflow 3\n- \"shopper showroom\" OR \"for a customer\" → switch to workflow 2  \n- \"start over\" OR \"cancel\" OR \"general chat\" → switch to workflow 1\n\n### If currently in workflow 1 or null (general/new session):\n**Route based on intent**:\n- Shopper indicators (\"for a customer\", \"client named X\", \"shopper showroom\") → workflow 2\n- Personal indicators (\"my showroom\", \"for me\", \"personal showroom\") → workflow 3\n- Everything else (\"hi\", \"help\", unclear messages) → workflow 1\n\n## Response Requirements\n\nReturn ONLY valid JSON in this exact format:\n\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"selected_workflow_id\": {\n      \"type\": \"integer\",\n      \"enum\": [1, 2, 3],\n      \"description\": \"The workflow ID to route to\"\n    },\n    \"role\": {\n      \"type\": \"string\",\n      \"enum\": [\"assistant\"],\n      \"description\": \"The role of the response\"\n    },\n    \"content\": {\n      \"type\": \"string\",\n      \"description\": \"Brief explanation of the decision\"\n    },\n    \"switch\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether workflow is being changed (true) or staying the same (false)\"\n    },\n    \"reasoning\": {\n      \"type\": \"string\",\n      \"description\": \"Detailed explanation of why this decision was made\"\n    }\n  },\n  \"required\": [\"selected_workflow_id\", \"role\", \"content\", \"switch\", \"reasoning\"],\n  \"additionalProperties\": false\n}\n\n## Example Responses\n\n**Current workflow_id = 2, message = \"Jimmy Sanders\":**\n```json\n{\n  \"selected_workflow_id\": 2,\n  \"role\": \"assistant\", \n  \"content\": \"Got the name, continuing with shopper showroom setup.\",\n  \"switch\": false,\n  \"reasoning\": \"User provided a name while in shopper showroom workflow - this is expected data collection input, staying in current workflow.\"\n}\n```\n\n**Current workflow_id = 2, message = \"personal showroom\":**\n```json\n{\n  \"selected_workflow_id\": 3,\n  \"role\": \"assistant\",\n  \"content\": \"Switching to personal showroom setup.\",\n  \"switch\": true,\n  \"reasoning\": \"User explicitly requested personal showroom, switching from shopper workflow.\"\n}\n```\n\n**Current workflow_id = 1, message = \"hi there\":**\n```json\n{\n  \"selected_workflow_id\": 1,\n  \"role\": \"assistant\",\n  \"content\": \"Hello! How can I help you today?\",\n  \"switch\": false,\n  \"reasoning\": \"General greeting with no specific intent, staying in general chat.\"\n}\n```",
+              "role": "system"
+            }
+          ]
+        },
+        "simplify": false,
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -760,
+        200
+      ],
+      "id": "b193a9de-1a15-4ab1-8a2e-2401ee74e898",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "fV6ZtMPTmEOuvX9m",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "25ebe5c3-8605-4410-9f53-8acd001825ee",
+              "name": "role",
+              "value": "assistant",
+              "type": "string"
+            },
+            {
+              "id": "2f7478e4-7dc5-41ae-9b15-dde33e6acf48",
+              "name": "content",
+              "value": "={{ $json.output.content }}",
+              "type": "string"
+            },
+            {
+              "id": "e5dddde6-2f3a-4b4a-bcb6-5f568606b226",
+              "name": "conversation_id",
+              "value": "={{ $('Webhook').item.json.query.conversation_id }}",
+              "type": "string"
+            },
+            {
+              "id": "d16d38a7-f4f6-4e58-8b09-21d4837258af",
+              "name": "newly_collected_data",
+              "value": "={{null}}",
+              "type": "string"
+            },
+            {
+              "id": "ba9965c8-349b-4321-bd02-5194aecf1968",
+              "name": "collected_data",
+              "value": "={{null}}",
+              "type": "string"
+            },
+            {
+              "id": "f9171065-5221-465d-85c4-fea8e801aa59",
+              "name": "next_field",
+              "value": "={{null}}",
+              "type": "string"
+            },
+            {
+              "id": "398a9a7a-20f5-460d-b275-a8f232382089",
+              "name": "workflow_id",
+              "value": "={{ $json.output.selected_workflow_id }}",
+              "type": "number"
+            },
+            {
+              "id": "9d55b6f7-6e96-462a-8835-d44ea6bbe28e",
+              "name": "workflow_status",
+              "value": "={{ $('Webhook').item.json.query.workflow_status }}",
+              "type": "string"
+            },
+            {
+              "id": "76b02ae2-35e1-46fb-a8ae-2298d7086ee4",
+              "name": "execution_id",
+              "value": "={{ $execution.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        260,
+        0
+      ],
+      "id": "8b965b3d-0608-48ee-8f21-34bc18d885f7",
+      "name": "set response data format"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.autosnap.cloud/api:owKhF9pX/webhook/data_collection_n8n",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "conversation_id",
+              "value": "={{ $('Webhook').item.json.query.conversation_id }}"
+            },
+            {
+              "name": "newly_collected_data",
+              "value": "={{ $json.newly_collected_data }}"
+            },
+            {
+              "name": "collected_data",
+              "value": "={{ $json.collected_data }}"
+            },
+            {
+              "name": "next_field",
+              "value": "={{ $json.next_field }}"
+            },
+            {
+              "name": "workflow_id",
+              "value": "={{ $json.workflow_id }}"
+            },
+            {
+              "name": "workflow_status",
+              "value": "={{ $json.workflow_status }}"
+            },
+            {
+              "name": "role",
+              "value": "assistant"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        460
+      ],
+      "id": "1f759b38-e1e4-4bfc-aa1a-855eb5610314",
+      "name": "save data to xano"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "25ebe5c3-8605-4410-9f53-8acd001825ee",
+              "name": "role",
+              "value": "assistant",
+              "type": "string"
+            },
+            {
+              "id": "2f7478e4-7dc5-41ae-9b15-dde33e6acf48",
+              "name": "content",
+              "value": "={{ $json.output.content }}",
+              "type": "string"
+            },
+            {
+              "id": "a30372c5-17da-48a8-b69c-9d296a7f37de",
+              "name": "conversation_id",
+              "value": "=",
+              "type": "string"
+            },
+            {
+              "id": "b59fb221-8d1a-440f-aa76-0371fdd17414",
+              "name": "newly_collected_data",
+              "value": "={{ $json.output.newly_collected_fields }}",
+              "type": "array"
+            },
+            {
+              "id": "b5e44a8b-30d6-496c-aa5b-3eb7f07f7645",
+              "name": "next_field",
+              "value": "={{ $json.output.next_field }}",
+              "type": "string"
+            },
+            {
+              "id": "0ea9f399-01d4-4ed6-bcbf-7183e682fc4a",
+              "name": "collected_data",
+              "value": "={{ $json.output.collected_data }}",
+              "type": "object"
+            },
+            {
+              "id": "394e77aa-4c5b-4859-86b6-32de64f207ee",
+              "name": "workflow_id",
+              "value": "={{ $('OpenAI').item.json.choices[0].message.content.selected_workflow_id }}",
+              "type": "number"
+            },
+            {
+              "id": "637bc307-51df-4a98-8c2b-1fd306732179",
+              "name": "workflow_status",
+              "value": "={{ $json.output.workflow_status }}",
+              "type": "string"
+            },
+            {
+              "id": "1c1b0073-eb6a-4f00-8de4-303beb37e8b7",
+              "name": "execution_id",
+              "value": "={{ $execution.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        260,
+        400
+      ],
+      "id": "d87d0fb8-135a-4612-b5a1-bde196e61e72",
+      "name": "set response data format1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.query.workflow_status }}",
+                    "rightValue": "=optional_collection",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "8cbe5b3b-883c-4e90-8dce-207961cff8a0"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "07462f4b-eb27-4e18-b417-5079081a1e97",
+                    "leftValue": "={{ $json.query.workflow_status }}",
+                    "rightValue": "=active",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7d4ad469-cec9-483d-96c5-ea25be564fec",
+                    "leftValue": "={{ $json.query.workflow_status }}",
+                    "rightValue": "showroom_in_progress",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1000,
+        179
+      ],
+      "id": "03dbf54d-78d5-4464-b098-f98ba3147d0c",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.3,
+      "position": [
+        -520,
+        480
+      ],
+      "id": "8e8e8b6e-7ff9-4659-8f06-3e518ce005be",
+      "name": "notify-showroom-creation"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "25ebe5c3-8605-4410-9f53-8acd001825ee",
+              "name": "role",
+              "value": "assistant",
+              "type": "string"
+            },
+            {
+              "id": "2f7478e4-7dc5-41ae-9b15-dde33e6acf48",
+              "name": "content",
+              "value": "=Hang tight! Your showroom is being created. I'll notify you shortly once it's completed. Should take less than 30 seconds to complete!",
+              "type": "string"
+            },
+            {
+              "id": "e5dddde6-2f3a-4b4a-bcb6-5f568606b226",
+              "name": "conversation_id",
+              "value": "={{ $('Webhook').item.json.query.conversation_id }}",
+              "type": "string"
+            },
+            {
+              "id": "398a9a7a-20f5-460d-b275-a8f232382089",
+              "name": "workflow_id",
+              "value": "={{ $json.query.workflow_id }}",
+              "type": "number"
+            },
+            {
+              "id": "9ac11080-ee55-4b43-bc3d-d1c102157797",
+              "name": "workflow_status",
+              "value": "=showroom_in_progress",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -780,
+        520
+      ],
+      "id": "8a5f037f-253b-4717-833a-645a01bcc4ee",
+      "name": "preparedata-showroomcreation"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-preview-05-20",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        700
+      ],
+      "id": "e84d4384-b360-44fe-bd82-335fb94c380f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "dTrCUBAIDAyn31Al",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "driftbot.app.n8n.cloud",
+            "accept": "application/json",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "34.122.111.158",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "95b74dea5459e1b4-ORD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "x-forwarded-for": "34.122.111.158, 172.70.127.45",
+            "x-forwarded-host": "driftbot.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-63-757945c69-fw6gx",
+            "x-is-trusted": "yes",
+            "x-real-ip": "34.122.111.158"
+          },
+          "params": {},
+          "query": {
+            "user_query": "hi",
+            "conversation_id": "566",
+            "user_id": "",
+            "session_id": "44",
+            "collected_data": "{}",
+            "workflow_state": "{\"workflow_id\":null,\"collected_fields\":null,\"next_field\":null}"
+          },
+          "body": {},
+          "webhookUrl": "https://driftbot.app.n8n.cloud/webhook/driftbot-webhook",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "GeneralChat",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "GeneralChat",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "GeneralChat",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "dataCollectionAgent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "GeneralChat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "dataCollectionAgent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "dataCollectionAgent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "dataCollectionAgent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "dataCollectionAgent": {
+      "main": [
+        [
+          {
+            "node": "set response data format1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GeneralChat": {
+      "main": [
+        [
+          {
+            "node": "set response data format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set response data format": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set response data format1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "save data to xano",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "preparedata-showroomcreation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "preparedata-showroomcreation": {
+      "main": [
+        [
+          {
+            "node": "notify-showroom-creation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "dataCollectionAgent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "26e65647-901c-4b72-bd7d-d45727a566ba",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1ca49669ac6eb34a126715b2dde1c6897fd9a1f3ac063477bed2d23be03eea18"
+  },
+  "id": "USu0uKJsDZ7okh9D",
+  "tags": []
+}

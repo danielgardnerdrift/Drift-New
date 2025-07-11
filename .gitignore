@@ -1,0 +1,102 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+.pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output
+
+# Package files
+*.tgz
+.yarn-integrity
+
+# Cache directories
+.npm
+.eslintcache
+.stylelintcache
+.cache/
+
+# Frontend specific
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/node_modules/
+
+# Backend specific
+backend/venv/
+backend/.env
+backend/__pycache__/
+backend/*.pyc
+backend/src/__pycache__/
+backend/src/*/__pycache__/
+
+# Keep example files
+!.env.example
+!.env.local.example
+
+# Claude session files (keep for team reference)
+# Comment out if you want to track these
+.claude/sessions/
+.claude/*.md

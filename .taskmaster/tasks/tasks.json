@@ -1,0 +1,247 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Setup Next.js Frontend Project with Theysis",
+        "description": "Initialize the Next.js project with TypeScript and integrate Theysis for dynamic UI generation, replacing the current WeWeb interface.",
+        "details": "1. Create a new Next.js 14 project with TypeScript using `npx create-next-app@latest drift-frontend --typescript`\n2. Install required dependencies: `npm install zustand @tanstack/react-query tailwindcss theysis@latest`\n3. Set up project structure according to PRD specifications:\n   - app/ (for Next.js App Router)\n   - components/ (for React components)\n   - lib/ (for utility functions and API clients)\n   - public/ (for static assets)\n4. Configure Tailwind CSS for styling\n5. Create .env.local file with required environment variables:\n   ```\n   NEXT_PUBLIC_XANO_API_URL=https://api.autosnap.cloud\n   NEXT_PUBLIC_DRIFT_PRIMARY_COLOR=#fe3500\n   XANO_API_KEY=your_api_key\n   ```\n6. Initialize Theysis configuration in `theysis.config.ts` with the specified theme and component whitelist\n7. Set up basic layout.tsx with Theysis provider\n8. Configure TypeScript with strict mode enabled\n9. Set up ESLint and Prettier for code quality",
+        "testStrategy": "1. Verify Next.js project builds successfully with `npm run build`\n2. Ensure Theysis components render correctly\n3. Validate environment variables are properly loaded\n4. Test responsive layout on multiple screen sizes\n5. Run ESLint to ensure code quality standards",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Setup LangGraph Python Service",
+        "description": "Create the LangGraph service that will receive calls from Xano's /chat/message_complete endpoint (replacing the current n8n webhook URL) and maintain compatibility by calling back to the existing Xano backend webhook.",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "details": "1. Initialize Python project with FastAPI framework:\n   ```bash\n   mkdir -p drift-langgraph/src/{workflows,models,utils}\n   cd drift-langgraph\n   python -m venv venv\n   source venv/bin/activate\n   pip install fastapi uvicorn langgraph langchain-openai langchain-google-genai pydantic python-dotenv redis\n   ```\n2. Create project structure as specified in PRD:\n   - src/\n     - __init__.py\n     - main.py (FastAPI app)\n     - workflows/\n     - models/\n     - utils/\n3. Set up FastAPI app in main.py with health check endpoint\n4. Create .env file with required environment variables:\n   ```\n   OPENAI_API_KEY=your_openai_key\n   GOOGLE_AI_API_KEY=your_gemini_key\n   XANO_WEBHOOK_URL=https://api.autosnap.cloud/api:owKhF9pX/webhook/data_collection_n8n\n   PORT=8000\n   ```\n5. Implement basic LangGraph state management\n6. Create Dockerfile for containerization:\n   ```dockerfile\n   FROM python:3.11-slim\n   WORKDIR /app\n   COPY requirements.txt .\n   RUN pip install --no-cache-dir -r requirements.txt\n   COPY . .\n   CMD [\"uvicorn\", \"src.main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"]\n   ```\n7. Generate requirements.txt file\n8. Create endpoint to receive calls from Xano's /chat/message_complete endpoint\n9. Implement logic to process the request and call back to Xano's /webhook/data_collection_n8n endpoint",
+        "testStrategy": "1. Verify FastAPI app starts successfully\n2. Test health check endpoint returns 200 OK\n3. Validate environment variables are loaded correctly\n4. Ensure Docker container builds and runs\n5. Test basic LangGraph state management functionality\n6. Verify the endpoint can receive calls from Xano's /chat/message_complete\n7. Test the callback functionality to Xano's /webhook/data_collection_n8n endpoint\n8. Validate the entire flow: Xano → LangGraph → Xano webhook",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Implement Xano API Client",
+        "description": "Create a TypeScript client for interacting with the existing Xano backend API endpoints.",
+        "details": "1. Create `lib/xano-client.ts` to handle API communication with Xano\n2. Implement API endpoints as specified in PRD:\n   - Session Management:\n     - POST `/session/create`\n     - POST `/userchatsession/get_data`\n   - Chat Flow:\n     - POST `/chat/message_complete`\n     - POST `/webhook/n8n_data_collection` (for backward compatibility)\n   - Authentication:\n     - POST `/auth/login`\n     - POST `/auth/signup`\n     - GET `/auth/me`\n3. Use fetch API with TypeScript types for all requests\n4. Implement error handling and retry logic\n5. Add request/response interceptors for authentication\n6. Create TypeScript interfaces for all API responses in `lib/types.ts`\n7. Implement token management for authenticated requests\n8. Add request timeout handling\n9. Use environment variables for API URL and keys",
+        "testStrategy": "1. Create mock server to test API client functions\n2. Write unit tests for each API endpoint\n3. Test error handling with simulated network failures\n4. Verify authentication flow works correctly\n5. Test retry logic with intentionally failing requests\n6. Validate type safety with TypeScript compiler",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Implement Chat Interface Components",
+        "description": "Create React components for the chat interface including message display, input field, and typing indicators.",
+        "details": "1. Create the following components:\n   - `components/ChatInterface.tsx`: Main chat container\n   - `components/MessageList.tsx`: Display chat history\n   - `components/MessageInput.tsx`: User input field\n   - `components/TypingIndicator.tsx`: Show when bot is responding\n   - `components/Message.tsx`: Individual message display\n2. Implement real-time features:\n   - Typing indicators showing \"driftBot is thinking...\"\n   - Animated dots during response generation\n   - Auto-scroll to latest message\n3. Style components using Tailwind CSS with the Drift brand colors\n4. Add support for different message types (text, forms, links)\n5. Implement responsive design for mobile and desktop\n6. Add accessibility features (ARIA attributes, keyboard navigation)\n7. Optimize for performance with React.memo and useCallback\n8. Implement smooth animations for message transitions",
+        "testStrategy": "1. Write unit tests for each component using React Testing Library\n2. Test responsive behavior on different screen sizes\n3. Verify accessibility with automated tools (axe-core)\n4. Test keyboard navigation and screen reader compatibility\n5. Validate performance with React DevTools\n6. Test animation smoothness across browsers",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Implement Zustand State Management",
+        "description": "Create a Zustand store for managing chat state, including messages, workflow status, and collected data.",
+        "details": "1. Create `lib/store.ts` with Zustand store implementation\n2. Define ChatStore interface as specified in PRD:\n   ```typescript\n   interface ChatStore {\n     conversationId: number | null;\n     messages: Message[];\n     workflowId: number;\n     workflowStatus: string;\n     collectedData: Record<string, any>;\n     isTyping: boolean;\n     \n     // Actions\n     sendMessage: (message: string) => Promise<void>;\n     streamResponse: (response: StreamResponse) => void;\n     updateCollectedData: (data: Record<string, any>) => void;\n   }\n   ```\n3. Implement persistence with zustand/middleware\n4. Add selectors for efficient component rendering\n5. Implement action creators for all state modifications\n6. Add middleware for logging in development\n7. Create hooks for accessing store state in components\n8. Implement optimistic updates for better UX\n9. Add error handling for failed actions",
+        "testStrategy": "1. Write unit tests for store actions and selectors\n2. Test persistence across page refreshes\n3. Verify state updates correctly with mock actions\n4. Test concurrent updates to ensure consistency\n5. Validate type safety with TypeScript\n6. Test integration with React components",
+        "priority": "high",
+        "dependencies": [
+          1,
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Implement LangGraph Intent Detection Node",
+        "description": "Create the Intent Detection node in LangGraph to determine workflow routing based on user messages.",
+        "details": "1. Create `src/workflows/intent_detection.py` with IntentDetectionNode class\n2. Implement using GPT-3.5-turbo for cost efficiency as specified in PRD\n3. Define the node interface:\n   ```python\n   class IntentDetectionNode:\n       def __init__(self, llm_client):\n           self.llm = llm_client\n           self.model = \"gpt-3.5-turbo\"\n       \n       async def detect_intent(self, state: ConversationState) -> WorkflowRoute:\n           # Implementation\n   ```\n4. Create prompt templates for intent detection\n5. Implement logic to map user messages to workflow_id (1, 2, or 3)\n6. Add structured output parsing with Pydantic models\n7. Implement caching for similar queries\n8. Add confidence scoring for intent detection\n9. Create fallback logic for ambiguous intents\n10. Optimize token usage for cost efficiency",
+        "testStrategy": "1. Write unit tests with sample user messages\n2. Test accuracy of intent detection with various inputs\n3. Verify correct workflow routing for each intent\n4. Test edge cases and ambiguous messages\n5. Benchmark performance and response times\n6. Validate token usage is optimized",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Implement LangGraph Data Collection Node",
+        "description": "Create the Data Collection node in LangGraph to extract and validate data based on workflow requirements, which will receive requests from Xano's /chat/message_complete endpoint and send collected data to Xano's /webhook/data_collection_n8n endpoint.",
+        "status": "pending",
+        "dependencies": [
+          2,
+          6
+        ],
+        "priority": "high",
+        "details": "1. Create `src/workflows/data_collection.py` with DataCollectionNode class\n2. Implement using Gemini 2.5 Flash for better reasoning as specified in PRD\n3. Define the node interface:\n   ```python\n   class DataCollectionNode:\n       def __init__(self, llm_client):\n           self.llm = llm_client\n           self.model = \"gemini-2.5-flash\"\n       \n       async def collect_data(self, state: ConversationState) -> CollectedData:\n           # Implementation\n   ```\n4. Create data extraction logic for each workflow:\n   - General Chat (workflow_id = 1): No data collection\n   - Shopper Showroom (workflow_id = 2): Extract required and optional fields\n   - Personal Showroom (workflow_id = 3): Extract required and optional fields\n5. Implement validation for collected data\n6. Add tracking for collected fields and next_field determination\n7. Create structured output with Pydantic models\n8. Implement progressive data collection strategy\n9. Add error handling for invalid or missing data\n10. Implement integration with Xano endpoints:\n    - Receive data collection requests from Xano's /chat/message_complete endpoint\n    - After extracting and validating data, call Xano's /webhook/data_collection_n8n endpoint to save the collected data\n11. Add proper error handling and logging for API communication with Xano",
+        "testStrategy": "1. Write unit tests for data extraction with sample messages\n2. Test validation logic for each field type\n3. Verify correct next_field determination\n4. Test with various input formats and edge cases\n5. Benchmark performance and response times\n6. Validate extraction accuracy for different data types\n7. Test the complete flow from receiving data from Xano's chat endpoint to sending collected data back to Xano\n8. Mock Xano endpoints for integration testing\n9. Test error handling for API communication failures",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement LangGraph Workflow Routing",
+        "description": "Create the workflow routing logic in LangGraph to manage conversation flow between different nodes.",
+        "details": "1. Create `src/workflows/routing.py` to manage workflow state transitions\n2. Implement LangGraph graph definition with nodes:\n   ```python\n   from langgraph.graph import StateGraph\n   \n   def create_workflow_graph():\n       graph = StateGraph()\n       \n       # Add nodes\n       graph.add_node(\"intent_detection\", intent_detection_node)\n       graph.add_node(\"data_collection\", data_collection_node)\n       graph.add_node(\"general_chat\", general_chat_node)\n       \n       # Add edges\n       # Implementation\n       \n       return graph\n   ```\n3. Define state transitions based on workflow_id and collected data\n4. Implement conditional routing logic\n5. Create state persistence with Redis\n6. Add error handling and recovery mechanisms\n7. Implement timeout handling for long-running operations\n8. Create logging for workflow transitions\n9. Add metrics collection for performance monitoring",
+        "testStrategy": "1. Test workflow transitions with various input states\n2. Verify correct routing based on intent and collected data\n3. Test error handling and recovery\n4. Validate state persistence across requests\n5. Benchmark performance with concurrent workflows\n6. Test timeout handling with delayed responses",
+        "priority": "high",
+        "dependencies": [
+          2,
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Implement Streaming Response Mechanism",
+        "description": "Create a streaming response mechanism for real-time chat updates using Server-Sent Events (SSE).",
+        "details": "1. Implement SSE endpoint in FastAPI:\n   ```python\n   @app.get(\"/api/stream/{conversation_id}\")\n   async def stream_response(conversation_id: int, request: Request):\n       return EventSourceResponse(generate_events(conversation_id))\n   ```\n2. Create streaming client in Next.js:\n   ```typescript\n   const streamResponse = async (conversationId: number) => {\n     const eventSource = new EventSource(`/api/stream/${conversationId}`);\n     eventSource.onmessage = (event) => {\n       // Process streamed response\n     };\n   };\n   ```\n3. Implement sentence-by-sentence streaming for better UX\n4. Add typing indicators during streaming\n5. Implement reconnection logic for dropped connections\n6. Create buffering mechanism for smooth display\n7. Add progress tracking for long responses\n8. Implement token counting for billing purposes\n9. Create abort controller for cancelling streams",
+        "testStrategy": "1. Test streaming with various response lengths\n2. Verify reconnection works after connection drops\n3. Test concurrent streams for multiple conversations\n4. Measure latency and optimize if needed\n5. Test cancellation with abort controller\n6. Validate token counting accuracy",
+        "priority": "medium",
+        "dependencies": [
+          2,
+          4,
+          5,
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Implement Theysis Dynamic Form Generation",
+        "description": "Integrate Theysis for dynamic form generation based on the data collection requirements of each workflow.",
+        "details": "1. Create `theysis.config.ts` with form definitions as specified in PRD\n2. Implement `components/TheysisChat.tsx` for rendering dynamic forms\n3. Create form schemas for each workflow:\n   - Shopper Showroom (workflow_id = 2)\n   - Personal Showroom (workflow_id = 3)\n4. Implement form validation rules\n5. Add styling consistent with Drift brand\n6. Create form submission handlers\n7. Implement dynamic field rendering based on next_field\n8. Add support for different input types (text, select, number, etc.)\n9. Implement field dependencies (e.g., model options based on selected make)\n10. Create error handling for form validation",
+        "testStrategy": "1. Test form rendering with various field types\n2. Verify validation rules work correctly\n3. Test form submission and data collection\n4. Validate accessibility of generated forms\n5. Test responsive behavior on different devices\n6. Verify dynamic field updates based on dependencies",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          4,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Implement Authentication and Session Management",
+        "description": "Create authentication flow and session management for user identification and persistence.",
+        "details": "1. Implement authentication API integration with Xano:\n   ```typescript\n   const login = async (email: string, password: string) => {\n     const response = await xanoClient.post('/auth/login', { email, password });\n     // Handle response and store token\n   };\n   ```\n2. Create session management with cookies or localStorage\n3. Implement protected routes with authentication checks\n4. Add user profile management\n5. Create session recovery mechanism\n6. Implement token refresh logic\n7. Add logout functionality\n8. Create guest session handling for unauthenticated users\n9. Implement session timeout handling",
+        "testStrategy": "1. Test login/signup flows with valid and invalid credentials\n2. Verify session persistence across page refreshes\n3. Test protected routes with and without authentication\n4. Validate token refresh works correctly\n5. Test session timeout and recovery\n6. Verify guest sessions work as expected",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          3,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Implement Sidebar with Analytics",
+        "description": "Create a sidebar component to display user information, token count, and showroom engagement metrics.",
+        "details": "1. Create `components/Sidebar.tsx` with the following sections:\n   - User profile information\n   - Token usage statistics\n   - Showroom engagement metrics\n   - Login/Signup buttons for unauthenticated users\n2. Implement real-time updates for metrics\n3. Add responsive design for mobile and desktop\n4. Create collapsible sidebar for mobile view\n5. Implement theme customization based on brand colors\n6. Add animations for metric changes\n7. Create tooltips for metric explanations\n8. Implement session summary statistics",
+        "testStrategy": "1. Test sidebar rendering with various user states\n2. Verify metrics update correctly\n3. Test responsive behavior on different screen sizes\n4. Validate accessibility of sidebar components\n5. Test animations and transitions\n6. Verify theme customization works correctly",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          4,
+          5,
+          11
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Implement Showroom Creation Progress Tracking",
+        "description": "Create a progress tracking mechanism for the 10-15 second showroom creation process.",
+        "details": "1. Implement progress bar component:\n   ```typescript\n   const ShowroomProgress: React.FC<{ status: string; progress: number }> = ({ status, progress }) => {\n     // Render progress bar with status message\n   };\n   ```\n2. Create polling mechanism for status updates:\n   ```typescript\n   const pollShowroomStatus = async (showroomId: string) => {\n     const interval = setInterval(async () => {\n       const status = await xanoClient.get(`/showroom/status/${showroomId}`);\n       // Update progress state\n       if (status.completed) clearInterval(interval);\n     }, 1000);\n   };\n   ```\n3. Implement animated progress indicators\n4. Add estimated time remaining calculation\n5. Create success and error states\n6. Implement retry mechanism for failed creations\n7. Add webhook for completion notification\n8. Create showroom link display on completion",
+        "testStrategy": "1. Test progress tracking with various completion times\n2. Verify polling works correctly\n3. Test error handling and retry mechanism\n4. Validate progress bar animations\n5. Test estimated time calculation accuracy\n6. Verify showroom link display on completion",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          3,
+          4,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Implement Error Handling and Recovery",
+        "description": "Create comprehensive error handling and recovery mechanisms throughout the application.",
+        "details": "1. Implement React Error Boundary as specified in PRD:\n   ```typescript\n   class ChatErrorBoundary extends React.Component {\n     state = { hasError: false, error: null };\n     \n     static getDerivedStateFromError(error) {\n       return { hasError: true, error };\n     }\n     \n     componentDidCatch(error, errorInfo) {\n       // Log error to monitoring service\n     }\n     \n     render() {\n       if (this.state.hasError) {\n         return <ErrorDisplay error={this.state.error} onRetry={this.resetError} />;\n       }\n       return this.props.children;\n     }\n     \n     resetError = () => this.setState({ hasError: false, error: null });\n   }\n   ```\n2. Create error handling for API requests\n3. Implement retry logic for failed requests\n4. Add graceful degradation for unavailable services\n5. Create user-friendly error messages\n6. Implement logging for error tracking\n7. Add recovery mechanisms for session state loss\n8. Create fallback UI components for error states",
+        "testStrategy": "1. Test error boundary with simulated errors\n2. Verify retry logic works for different error types\n3. Test graceful degradation with unavailable services\n4. Validate error messages are user-friendly\n5. Test recovery mechanisms for various failure scenarios\n6. Verify logging captures relevant error information",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Implement Deployment Pipeline",
+        "description": "Create deployment configuration and CI/CD pipeline for both frontend and backend services.",
+        "details": "1. Create docker-compose.yml as specified in PRD:\n   ```yaml\n   version: '3.8'\n   services:\n     frontend:\n       build: ./drift-frontend\n       ports:\n         - \"3000:3000\"\n       environment:\n         - NEXT_PUBLIC_XANO_API_URL\n     \n     langgraph:\n       build: ./drift-langgraph\n       ports:\n         - \"8000:8000\"\n       environment:\n         - OPENAI_API_KEY\n         - GOOGLE_AI_API_KEY\n   ```\n2. Set up Vercel deployment for Next.js frontend\n3. Configure Railway deployment for LangGraph service\n4. Create GitHub Actions workflow for CI/CD:\n   ```yaml\n   name: CI/CD Pipeline\n   on:\n     push:\n       branches: [main]\n   jobs:\n     test:\n       # Test job configuration\n     build:\n       # Build job configuration\n     deploy:\n       # Deploy job configuration\n   ```\n5. Implement environment-specific configurations\n6. Add monitoring and alerting setup\n7. Create database migration scripts\n8. Implement rollback procedures\n9. Add performance monitoring integration",
+        "testStrategy": "1. Test Docker builds for both services\n2. Verify CI/CD pipeline with test deployments\n3. Test environment-specific configurations\n4. Validate monitoring and alerting setup\n5. Test rollback procedures\n6. Verify performance monitoring captures relevant metrics",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Comprehensive Documentation Review and Gap Analysis",
+        "description": "Review all existing documentation across reference-docs, claude-reference-files, and api_tokens directories, and conduct research on current technologies to identify gaps before implementation begins.",
+        "details": "1. Review documentation in reference-docs directory:\n   - Analyze all Xano API requirements and integration patterns\n   - Document API endpoints, data structures, and authentication methods\n   - Create a summary of critical Xano integration points\n\n2. Review claude-reference-files directory:\n   - Analyze n8n replacement workflow recommendations\n   - Document Next.js interface guidance and implementation patterns\n   - Create a mapping between existing n8n workflows and proposed LangGraph replacements\n\n3. Review api_tokens directory:\n   - Document all available API keys and their associated services\n   - Verify API key validity and access levels\n   - Create a secure reference for implementation teams\n\n4. Conduct Context7 research on current technologies:\n   - LangGraph: Latest features, best practices, and integration patterns\n   - Theysis: Current capabilities and integration approaches\n   - Next.js 14+: New features, performance optimizations, and best practices\n   - FastAPI: Current patterns for async operations and streaming responses\n   - Xano integration patterns: Best practices for backend integration\n\n5. Create comprehensive documentation deliverables:\n   - Technology stack overview document with version requirements\n   - API integration guide with authentication patterns\n   - Workflow transition plan from n8n to LangGraph\n   - Implementation gaps and clarification needs document\n   - Architecture diagram showing all system components and interactions\n\n6. Identify and document all gaps requiring clarification:\n   - Create a prioritized list of missing information\n   - Document assumptions that need validation\n   - Prepare specific questions for stakeholders",
+        "testStrategy": "1. Create a documentation coverage checklist and verify all required areas are addressed\n2. Conduct peer review of documentation deliverables with at least two team members\n3. Validate API endpoint documentation by making test calls to confirm accuracy\n4. Create a traceability matrix linking documentation to implementation tasks\n5. Verify all identified gaps have corresponding clarification questions\n6. Test documentation usability by having a developer unfamiliar with the project attempt to understand the system\n7. Validate technology research by comparing with official documentation sources\n8. Create a documentation version control process for ongoing updates\n9. Verify all API keys are properly documented with expiration dates and access scopes\n10. Test the workflow transition plan by mapping sample n8n workflows to LangGraph implementations",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-10T18:47:06.055Z",
+      "updated": "2025-07-10T19:28:08.224Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
