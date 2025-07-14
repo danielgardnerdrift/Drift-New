@@ -51,9 +51,8 @@ export interface ChatResponse {
   conversation_id?: number;
 }
 
-// Xano API types
-export interface XanoApiResponse<T = any> {
-  data?: T;
+// Xano API types - Xano returns data directly, not wrapped
+export type XanoApiResponse<T = any> = T & {
   error?: string;
   message?: string;
 }
@@ -75,22 +74,59 @@ export interface VehicleSearchPreference {
   body_style?: string;
 }
 
-// Collected data structure
+// Collected data structure - matches PRD exactly
 export interface CollectedData {
-  // Workflow 2 & 3 common fields
+  // Common fields (both workflows 2 & 3)
   dealershipwebsite_url?: string;
   vehicledetailspage_urls?: string[];
   user_name?: string;
-  user_phone?: number;
+  user_phone?: string;
   user_email?: string;
   
-  // Workflow 2 specific
+  // Workflow 2 specific (Shopper Showroom)
   shopper_name?: string;
-  gender_descriptor?: 'Man' | 'Woman';
-  age_descriptor?: '20s' | '30s' | '40s' | '50s' | '60s' | '70s' | '80s';
-  shopper_notes?: string;
-  location_descriptor?: string;
+  gender_descriptor?: string; // Inferred from pronouns, not structured
+  age_descriptor?: string; // Inferred age like '30s', '40s'
+  shopper_notes?: string; // Free text about customer lifestyle/location
   
-  // Vehicle preferences
+  // Vehicle preferences (both workflows can have this)
   vehiclesearchpreference?: VehicleSearchPreference[];
+}
+
+// Streaming response interface
+export interface StreamResponse {
+  content: string;
+  done: boolean;
+  workflow_id?: number;
+  collected_data?: Record<string, any>;
+  next_field?: string | null;
+}
+
+// Chat store interface as specified in PRD
+export interface ChatStore {
+  // State
+  conversationId: number | null;
+  messages: Message[];
+  workflowId: number;
+  workflowStatus: string;
+  collectedData: Record<string, any>;
+  isTyping: boolean;
+  sessionData: SessionData | null;
+  error: string | null;
+  currentField: string | null;
+  
+  // Actions
+  sendMessage: (message: string) => Promise<void>;
+  streamResponse: (response: StreamResponse) => void;
+  updateCollectedData: (data: Record<string, any>) => void;
+  setConversationId: (id: number) => void;
+  setWorkflowId: (id: number) => void;
+  setWorkflowStatus: (status: string) => void;
+  setSessionData: (data: SessionData) => void;
+  setIsTyping: (isTyping: boolean) => void;
+  setError: (error: string | null) => void;
+  setCurrentField: (field: string | null) => void;
+  addMessage: (message: Message) => void;
+  clearMessages: () => void;
+  reset: () => void;
 }

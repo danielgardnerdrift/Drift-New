@@ -1,7 +1,7 @@
 "use client";
 
-import DriftInterface from "@/app/components/DriftInterface";
+import DriftInterfaceV2 from "@/app/components/DriftInterfaceV2";
 
 export default function Home() {
-  return <DriftInterface />;
+  return <DriftInterfaceV2 />;
 }

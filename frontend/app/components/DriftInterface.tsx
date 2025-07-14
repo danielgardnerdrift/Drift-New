@@ -59,9 +59,9 @@ export default function DriftInterface() {
     try {
       // Get user IP (in production, this would come from the server)
       const ipAddress = '127.0.0.1'; // Fallback IP
-      const sessionResponse = await xanoClient.createSession({
-        visitor_ip_address: ipAddress,
-        browser_fingerprint: generateBrowserFingerprint()
+      const sessionResponse = await xanoClient.getOrCreateSession({
+        session_id: null, // No session yet, so pass null
+        ip_address: ipAddress
       });
       
       if (sessionResponse.data) {

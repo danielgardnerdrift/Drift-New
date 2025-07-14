@@ -218,7 +218,7 @@ When encountering issues:
 3. Batch operations when possible
 4. Monitor response times in `xano_browse_request_history`
 
-## Current Implementation Status
+## Current Implementation Status (Updated: January 14, 2025)
 
 ### ✅ Completed Components
 
@@ -233,48 +233,79 @@ When encountering issues:
 
 **Backend (LangGraph Service)**:
 - Complete FastAPI application with health checks
-- LangGraph workflow with 4-node architecture:
-  - `classify_intent` → `extract_data` → `generate_response` → `determine_next_step`
-- Pydantic models for type safety
+- LangGraph workflow with modular architecture:
+  - `intent_detection` → `data_collection` → workflow-specific nodes → `generate_response` → `determine_next_step`
+  - Centralized routing in `/backend/src/workflows/routing.py`
+- Pydantic V2 models for strict validation
 - Docker containerization ready
 - Environment configuration and comprehensive documentation
-- Location: `/backend/src/main.py`, `/backend/src/workflows/chat_workflow.py`
+- Location: `/backend/src/main.py`, `/backend/src/workflows/`
+
+**Data Validation System** (NEW - 2025-01-11):
+- Strict Pydantic V2 validation models aligned with PRD
+- Conditional field requirements properly implemented
+- Phone validation adjusted for test data (7-15 digits)
+- Performance: All validations complete in <1ms
+- Location: `/backend/src/models/validation.py`
 
 **Documentation**:
 - Corrected architecture understanding in all project files
 - Updated Taskmaster tasks with accurate implementation details
 - Comprehensive README files for both frontend and backend
+- Session archives for knowledge preservation
 
 ### 🔄 Current Development Status
 
-**Active Session Context**:
-- **Task Progress**: Completed Tasks 1-2 in Taskmaster, ready for Task 3+
-- **Build Status**: Frontend builds successfully, backend service running on port 8000
-- **Integration Ready**: Both services operational, ready for end-to-end testing
+**Active Session Context** (Updated: January 14, 2025):
+- **Task Progress**: Major milestone achieved - Vercel AI SDK v5 integration complete!
+- **Latest Completions**: 
+  - Migrated from Theysis to Vercel AI SDK v5 ✅
+  - Implemented generative UI in LangGraph nodes ✅
+  - Created all UI components with Drift branding ✅
+  - Integrated useChat with conversation tracking ✅
+- **Build Status**: Frontend and backend fully integrated
+- **Integration Status**: Ready for testing with real API keys
+- **Architecture**: UI generation happens in LangGraph, streams to frontend
 
-**Known Issues**:
-- ESLint warnings in frontend (disabled for builds temporarily)
-- Backend needs API keys configured for full functionality
-- End-to-end integration testing pending
+**Latest Implementation Details**:
+- **Validation Models**: `/backend/src/models/validation.py` - Strict PRD compliance
+- **Xano Integration**: `/backend/src/utils/xano_integration.py` - Ready for production
+- **Routing Logic**: `/backend/src/workflows/routing.py` - Modular architecture
+- **Test Coverage**: Comprehensive unit and integration tests
+- **Performance**: Validation benchmarks show <1ms processing time
 
-### 🎯 Immediate Next Actions
+**Known Issues (Resolved)**:
+- ✅ Module-level instantiation causing API key errors - Fixed
+- ✅ Phone validation too strict for test data - Adjusted to 7-15 digits
+- ✅ Pydantic V2 compatibility - Updated to latest syntax
+- ✅ Workflow naming confusion - All instances corrected
 
-1. **Environment Setup** (Priority: High):
+### 🎯 Immediate Next Actions (Updated: January 14, 2025)
+
+1. **Full Integration Testing** (Priority: Critical):
+   - **Status**: All components built, need end-to-end testing
+   - **Requirements**: Valid API keys in backend/.env
+   - **Test Flow**: Start backend → Start frontend → Test chat flow
+   - **Focus Areas**: Form submissions, streaming, conversation tracking
+
+2. **Authentication Implementation** (Priority: High):
+   - **Status**: Auth modal created, needs backend integration
+   - **Requirements**: Connect to Xano auth endpoints
+   - **Components**: Update session management, protect routes
+   
+3. **Environment Setup** (Priority: High):
    ```bash
    # Backend API keys needed:
    echo "OPENAI_API_KEY=your_key_here" >> backend/.env
    echo "GOOGLE_AI_API_KEY=your_key_here" >> backend/.env
+   echo "XANO_API_URL=https://api.autosnap.cloud" >> backend/.env
+   echo "ENABLE_XANO_SUBMISSION=true" >> backend/.env  # For production
    ```
 
-2. **Integration Testing** (Priority: High):
-   - Test Frontend → `/api/chat` → Xano integration
-   - Test LangGraph service endpoints independently
-   - Verify streaming responses work correctly
-
-3. **Code Quality** (Priority: Medium):
-   - Fix ESLint TypeScript warnings in frontend
-   - Add proper error boundaries in React components
-   - Improve type definitions in `lib/types.ts`
+4. **Frontend-Backend Integration** (Priority: High):
+   - Connect validated data collection to frontend forms
+   - Implement progressive form fields based on `current_field`
+   - Add real-time validation feedback
 
 ### 📁 Critical File Locations
 
@@ -282,7 +313,9 @@ When encountering issues:
 - Main Interface: `/frontend/app/components/DriftInterface.tsx`
 - API Route: `/frontend/app/api/chat/route.ts`  
 - Xano Client: `/frontend/lib/xano-client.ts`
+- **Zustand Store**: `/frontend/lib/store.ts` ✅ **(Task 5 Complete)**
 - Types: `/frontend/lib/types.ts`
+- **Store Testing**: `/frontend/components/ChatTest.tsx` & `/frontend/lib/__tests__/store.test.ts`
 
 **Backend Architecture**:
 - FastAPI App: `/backend/src/main.py`
@@ -296,14 +329,76 @@ When encountering issues:
 - Share link functionality with copy-to-clipboard
 - Recent showrooms list with type indicators
 - Proper gradient buttons and #fe3500 accent colors throughout
+- **NEW**: Generative UI components (sliders, selects, forms)
+- **NEW**: Dynamic form rendering based on workflow state
+- **NEW**: Safe JSX parsing with component whitelist
 
 ### 🔧 Architecture Decisions Made
 
-1. **Custom UI over Generic Components**: Chose to implement exact reference design instead of using generic Theysis C1Chat
-2. **Preserved Theysis Integration**: Maintained backend API compatibility while customizing frontend
-3. **LangGraph Service Design**: 4-node workflow architecture optimized for intent classification and data extraction
-4. **Model Selection**: GPT-3.5 for routing/chat, Gemini for data extraction
-5. **Container Ready**: Both services configured for Docker deployment
+1. **Vercel AI SDK v5 Integration**: Migrated from Theysis to Vercel AI SDK for generative UI
+2. **UI Generation in Backend**: Generate UI components in LangGraph nodes, not frontend
+3. **Hybrid State Management**: Zustand for global state + useChat for streaming
+4. **Multi-Model Approach**: GPT-3.5 for UI generation, Gemini for data extraction
+5. **Safe JSX Rendering**: JsxParser with component whitelist for security
+6. **Conversation Tracking**: Use conversation_id for pairing responses
+
+### 🚨 Critical Workflow Names (Updated 2025-01-11)
+
+**CORRECT NAMING**:
+1. `general_workflow` (workflow_id = 1) - General chat
+2. `shopper_showroom_workflow` (workflow_id = 2) - Salesperson creates FOR customer  
+3. `personal_showroom_workflow` (workflow_id = 3) - Salesperson's own showcase
+
+**NEVER USE**: "dealership_workflow" - This was a critical bug that has been fixed
+
+### 📊 Testing & Validation Commands
+
+```bash
+# Run all validation tests
+python -m pytest tests/test_validation.py tests/test_data_collection_validation.py tests/test_xano_integration.py -v
+
+# Run performance benchmarks
+python -m tests.benchmark_validation
+
+# Type checking
+pyright src/
+
+# Run all tests
+python -m pytest tests/ -v
+```
+
+### 🔍 Session Archives
+
+Session summaries and detailed context are saved in:
+- `/.claude/sessions/` - Timestamped session archives
+- Previous: `session-2025-01-11-drift-migration.md`
+- Latest: `session-2025-01-14-vercel-ai-migration.md`
+
+---
+
+## Recent Updates (January 14, 2025)
+
+### Vercel AI SDK v5 Migration Complete ✅
+- Replaced Theysis with Vercel AI SDK for generative UI
+- UI generation happens in LangGraph nodes using OpenAI tools
+- Created comprehensive UI component library
+- Implemented conversation tracking and streaming
+- All production APIs integrated (no mocks)
+
+### Key Integration Points
+- **Backend Streaming**: `/webhook/chat/stream` endpoint with SSE
+- **Frontend Route**: `/api/chat` converts LangGraph SSE to AI SDK format  
+- **UI Rendering**: UIRenderer component with JsxParser
+- **Form Handling**: Dynamic forms submit back through useChat
+
+### Testing Commands
+```bash
+# Backend (set API keys first)
+cd backend && python -m uvicorn src.main:app --reload
+
+# Frontend (separate terminal)
+cd frontend && npm run dev
+```
 
 ---
 

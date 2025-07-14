@@ -7,17 +7,20 @@ It processes chat requests using LangGraph and calls back to Xano's data collect
 
 import os
 import logging
+import asyncio
 from contextlib import asynccontextmanager
 from typing import Dict, Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 import aiohttp
 from dotenv import load_dotenv
+import json
 
 from .workflows.chat_workflow import create_chat_workflow
-from .models.schemas import ChatRequest, ChatResponse, HealthResponse
+from .models.schemas import ChatRequest, ChatResponse, HealthResponse, N8nWebhookResponse
 
 # Configure logging
 logging.basicConfig(
@@ -89,7 +92,7 @@ async def health_check():
     )
 
 
-@app.post("/webhook/chat", response_model=ChatResponse)
+@app.post("/webhook/chat")
 async def process_chat_request(request: ChatRequest):
     """
     Process chat request from Xano's /chat/message_complete endpoint.
@@ -106,30 +109,77 @@ async def process_chat_request(request: ChatRequest):
     try:
         logger.info(f"Processing chat request for query: {request.user_query[:100]}...")
         
-        # Process request through LangGraph workflow
-        workflow_input = {
-            "user_query": request.user_query,
-            "conversation_id": request.conversation_id,
-            "user_id": request.user_id,
-            "session_id": request.chat_user_session_id,
-            "visitor_ip": request.visitor_ip_address,
-            "additional_context": request.additional_context or {}
-        }
+        # Log the incoming request to see what Xano is sending
+        logger.info(f"Incoming request data: {request.model_dump()}")
         
-        # Run LangGraph workflow
-        result = await chat_workflow.ainvoke(workflow_input)
+        # Initialize the conversation state with data from Xano
+        from .models.schemas import ConversationState
         
-        # Call Xano data collection webhook with the processed data
-        await call_xano_webhook(result.get("collected_data", {}))
-        
-        # Return response for Xano
-        return ChatResponse(
-            success=True,
-            message=result.get("response_message", ""),
-            collected_data=result.get("collected_data", {}),
-            next_question=result.get("next_question"),
-            conversation_complete=result.get("conversation_complete", False)
+        initial_state = ConversationState(
+            user_query=request.user_query,
+            conversation_id=request.conversation_id,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            visitor_ip=request.visitor_ip_address,
+            workflow_id=request.workflow_id or 1,
+            workflow_status=request.workflow_status or "active",
+            current_field=request.next_field,
+            completed_fields=request.collected_fields or [],
+            # CRITICAL: collected_data starts empty - we only collect NEW data from this message
+            collected_data={}
         )
+        
+        # Run LangGraph workflow with thread_id for checkpointer
+        config = {
+            "configurable": {
+                "thread_id": f"conversation_{request.conversation_id or 'new'}"
+            }
+        }
+        result = await chat_workflow.ainvoke(initial_state.model_dump(), config)
+        
+        # Extract workflow state from result
+        workflow_state = result
+        
+        # Build n8n-compatible response body
+        response_body = N8nWebhookResponse(
+            role="assistant",
+            content=workflow_state.get("assistant_message", ""),
+            workflow_id=workflow_state.get("workflow_id", 1),
+            workflow_status=workflow_state.get("workflow_status", "active"),
+            collected_data=workflow_state.get("collected_data", {}),
+            newly_collected_data=workflow_state.get("newly_collected_fields", []),
+            next_field=workflow_state.get("current_field")
+        )
+        
+        # CRITICAL: Call Xano data collection webhook AFTER EVERY MESSAGE
+        # This is what n8n was doing - save the collected data to Xano
+        if request.conversation_id:
+            # Extract the fields that were actually collected this message
+            newly_collected = workflow_state.get("newly_collected_fields", [])
+            
+            # n8n sends field names as an array, not the values
+            webhook_data = {
+                "conversation_id": request.conversation_id,
+                "newly_collected_data": newly_collected,  # Array of field names
+                "collected_data": workflow_state.get("collected_data", {}),
+                "next_field": workflow_state.get("current_field"),
+                "workflow_id": workflow_state.get("workflow_id", 1),
+                "workflow_status": workflow_state.get("workflow_status", "active"),
+                "role": "assistant",
+                "content": workflow_state.get("assistant_message", "")
+            }
+            
+            # Call the webhook asynchronously
+            asyncio.create_task(call_xano_data_webhook(webhook_data))
+            logger.info(f"Scheduled data collection webhook call for conversation {request.conversation_id} with newly_collected: {newly_collected}")
+        
+        # Return in the exact format Xano expects (matching n8n webhook response)
+        return {
+            "response": {
+                "body": response_body.model_dump(),
+                "statusCode": 200
+            }
+        }
         
     except Exception as e:
         logger.error(f"Error processing chat request: {str(e)}")
@@ -139,36 +189,137 @@ async def process_chat_request(request: ChatRequest):
         )
 
 
-async def call_xano_webhook(collected_data: Dict[str, Any]) -> None:
+async def call_xano_data_webhook(webhook_data: Dict[str, Any]) -> None:
     """
     Call Xano's data collection webhook with processed data.
     
     This replaces the 'save data to xano' node that was in the n8n workflow.
+    CRITICAL: This must be called after EVERY message to maintain state in Xano.
     
     Args:
-        collected_data: Dictionary of collected data to send to Xano
+        webhook_data: Dictionary containing all data n8n was sending to Xano
     """
-    webhook_url = os.getenv("XANO_WEBHOOK_URL")
-    if not webhook_url:
-        logger.warning("XANO_WEBHOOK_URL not configured, skipping webhook call")
-        return
+    # Use the hardcoded URL like n8n was doing
+    webhook_url = "https://api.autosnap.cloud/api:owKhF9pX/webhook/data_collection_n8n"
     
     try:
-        logger.info("Calling Xano data collection webhook...")
+        logger.info(f"Calling Xano data collection webhook for conversation {webhook_data.get('conversation_id')}...")
+        logger.debug(f"Webhook data: {webhook_data}")
         
+        if http_session is None:
+            logger.error("HTTP session not initialized, cannot call webhook")
+            return
+            
         async with http_session.post(
             webhook_url,
-            json=collected_data,
+            json=webhook_data,
             headers={"Content-Type": "application/json"}
         ) as response:
             if response.status == 200:
-                logger.info("Successfully called Xano webhook")
+                response_data = await response.json()
+                logger.info(f"Successfully called Xano webhook: {response_data}")
             else:
-                logger.error(f"Xano webhook call failed with status {response.status}")
+                error_text = await response.text()
+                logger.error(f"Xano webhook call failed with status {response.status}: {error_text}")
                 
     except Exception as e:
         logger.error(f"Error calling Xano webhook: {str(e)}")
         # Don't raise here as this is a side effect, not critical to main flow
+
+
+@app.post("/webhook/chat/stream")
+async def process_chat_stream(request: ChatRequest):
+    """
+    Process chat request from frontend directly (streaming).
+    
+    This endpoint is called directly from the frontend after Xano forwards the request.
+    It streams responses back to the frontend, then calls Xano's webhook at the end.
+    
+    Args:
+        request: Chat request data originally from Xano
+        
+    Returns:
+        StreamingResponse: Server-sent events stream
+    """
+    async def generate():
+        try:
+            logger.info(f"Processing streaming chat request for query: {request.user_query[:100]}...")
+            
+            # Initialize the conversation state
+            from .models.schemas import ConversationState
+            
+            initial_state = ConversationState(
+                user_query=request.user_query,
+                conversation_id=request.conversation_id,
+                user_id=request.user_id,
+                session_id=request.session_id,
+                visitor_ip=request.visitor_ip_address,
+                workflow_id=request.workflow_id or 1,
+                workflow_status=request.workflow_status or "active",
+                current_field=request.next_field,
+                completed_fields=request.collected_fields or [],
+                collected_data={}
+            )
+            
+            # Run LangGraph workflow
+            config = {
+                "configurable": {
+                    "thread_id": f"conversation_{request.conversation_id or 'new'}"
+                }
+            }
+            result = await chat_workflow.ainvoke(initial_state.model_dump(), config)
+            
+            # Extract workflow state
+            workflow_state = result
+            
+            # Stream the response with metadata
+            response_data = {
+                "role": "assistant",
+                "content": workflow_state.get("assistant_message", ""),
+                "workflow_id": workflow_state.get("workflow_id", 1),
+                "workflow_status": workflow_state.get("workflow_status", "active"),
+                "collected_data": workflow_state.get("collected_data", {}),
+                "newly_collected_data": workflow_state.get("newly_collected_fields", []),
+                "next_field": workflow_state.get("current_field"),
+                "conversation_id": request.conversation_id,
+                "session_id": request.session_id,
+                "has_ui": "[UI_COMPONENT_START]" in workflow_state.get("assistant_message", "")
+            }
+            
+            # Send as SSE event with event type for better parsing
+            yield f"event: message\ndata: {json.dumps(response_data)}\nid: {request.conversation_id}-{request.session_id}\n\n"
+            
+            # Final event to signal completion
+            yield f"event: done\ndata: [DONE]\nid: {request.conversation_id}-{request.session_id}\n\n"
+            
+            # Call Xano webhook after streaming completes
+            if request.conversation_id:
+                webhook_data = {
+                    "conversation_id": request.conversation_id,
+                    "newly_collected_data": workflow_state.get("newly_collected_fields", []),
+                    "collected_data": workflow_state.get("collected_data", {}),
+                    "next_field": workflow_state.get("current_field"),
+                    "workflow_id": workflow_state.get("workflow_id", 1),
+                    "workflow_status": workflow_state.get("workflow_status", "active"),
+                    "role": "assistant",
+                    "content": workflow_state.get("assistant_message", "")
+                }
+                asyncio.create_task(call_xano_data_webhook(webhook_data))
+                
+        except Exception as e:
+            logger.error(f"Error in streaming chat: {str(e)}")
+            error_data = {"error": str(e)}
+            yield f"data: {json.dumps(error_data)}\n\n"
+    
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  # Disable Nginx buffering
+        }
+    )
 
 
 @app.get("/")
@@ -180,7 +331,8 @@ async def root():
         "version": "1.0.0",
         "endpoints": [
             "/health - Health check",
-            "/webhook/chat - Process chat requests from Xano"
+            "/webhook/chat - Process chat requests from Xano",
+            "/webhook/chat/stream - Stream chat responses to frontend"
         ]
     }
 

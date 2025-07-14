@@ -96,7 +96,31 @@ backend/src/*/__pycache__/
 !.env.example
 !.env.local.example
 
+# API Keys and Secrets (CRITICAL - NEVER COMMIT)
+api_tokens/
+*.pem
+*.key
+*secret*
+*private*
+task-master-config.json
+
 # Claude session files (keep for team reference)
 # Comment out if you want to track these
 .claude/sessions/
 .claude/*.md
+
+# Documentation with potential sensitive info
+INTEGRATION_COMPLETE.md
+latest-context.txt
+reference-docs/theysis*
+reference-docs/*integration.txt
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
